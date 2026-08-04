@@ -723,6 +723,25 @@
       }
     }
 
+    function closeItemPiece(id, loc) {
+      const source = loc === 'fridge' ? fridgeData[id] : freezerData[id];
+      if (!source) return;
+
+      const path = loc === 'fridge' ? 'fridge_items' : 'freezer_items';
+      
+      // Rimuove la stringa " (Aperto)" dal nome, se presente
+      let newName = source.name;
+      if (newName.endsWith(' (Aperto)')) {
+        newName = newName.substring(0, newName.length - 9);
+      }
+
+      // Aggiorna il database chiudendo il prodotto
+      db.ref(`${path}/${id}`).update({
+        name: newName,
+        isOpenPiece: false
+      });
+    }
+
     function renderFridgeList() {
       const filterBar = document.getElementById('fridge-shelves-filter-bar');
       filterBar.innerHTML = `<button onclick="filterShelf('fridge', 'all')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedFridgeShelf === 'all' ? 'bg-emerald-600 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">Tutti i ripiani</button>`;
@@ -747,7 +766,6 @@
       const sortBy = sortSelect ? sortSelect.value : 'expiry';
       
       items.sort((a, b) => {
-        // I pezzi aperti vanno in alto SOLO per "expiry" (default) o "urgent"
         if (sortBy === 'expiry' || sortBy === 'urgent') {
           if (a.isOpenPiece && !b.isOpenPiece) return -1;
           if (!a.isOpenPiece && b.isOpenPiece) return 1;
@@ -809,7 +827,10 @@
               </div>
             </div>
             <div class="flex items-center gap-1 flex-shrink-0">
-              <button onclick="openItemPiece('${item.id}', 'fridge')" class="p-2 text-gray-400 hover:text-amber-600" title="Segna pezzo come aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>
+              ${item.isOpenPiece 
+                ? `<button onclick="closeItemPiece('${item.id}', 'fridge')" class="p-2 text-gray-400 hover:text-emerald-600" title="Annulla apertura (Richiudi)"><i data-lucide="package" class="w-4 h-4"></i></button>`
+                : `<button onclick="openItemPiece('${item.id}', 'fridge')" class="p-2 text-gray-400 hover:text-amber-600" title="Segna pezzo come aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>`
+              }
               <button onclick="duplicateFoodItem('${item.id}', 'fridge')" class="p-2 text-gray-400 hover:text-emerald-600" title="Duplica alimento"><i data-lucide="copy" class="w-4 h-4"></i></button>
               <button onclick="openEditModal('${item.id}', 'fridge')" class="p-2 text-gray-400 hover:text-emerald-600" title="Modifica"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
               <button onclick="deleteFoodItem('${item.id}', 'fridge')" class="p-2 text-gray-400 hover:text-red-500" title="Elimina"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
@@ -843,7 +864,6 @@
       const sortBy = sortSelect ? sortSelect.value : 'expiry';
 
       items.sort((a, b) => {
-        // I pezzi aperti vanno in alto SOLO per "expiry" (default) o "urgent"
         if (sortBy === 'expiry' || sortBy === 'urgent') {
           if (a.isOpenPiece && !b.isOpenPiece) return -1;
           if (!a.isOpenPiece && b.isOpenPiece) return 1;
@@ -904,7 +924,10 @@
               </div>
             </div>
             <div class="flex items-center gap-1 flex-shrink-0">
-              <button onclick="openItemPiece('${item.id}', 'freezer')" class="p-2 text-gray-400 hover:text-cyan-600" title="Segna pezzo come aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>
+              ${item.isOpenPiece 
+                ? `<button onclick="closeItemPiece('${item.id}', 'freezer')" class="p-2 text-gray-400 hover:text-cyan-600" title="Annulla apertura (Richiudi)"><i data-lucide="package" class="w-4 h-4"></i></button>`
+                : `<button onclick="openItemPiece('${item.id}', 'freezer')" class="p-2 text-gray-400 hover:text-cyan-600" title="Segna pezzo come aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>`
+              }
               <button onclick="duplicateFoodItem('${item.id}', 'freezer')" class="p-2 text-gray-400 hover:text-cyan-600" title="Duplica alimento"><i data-lucide="copy" class="w-4 h-4"></i></button>
               <button onclick="openEditModal('${item.id}', 'freezer')" class="p-2 text-gray-400 hover:text-cyan-600" title="Modifica"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
               <button onclick="deleteFoodItem('${item.id}', 'freezer')" class="p-2 text-gray-400 hover:text-red-500" title="Elimina"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
