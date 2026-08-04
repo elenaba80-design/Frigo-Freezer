@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="it" class="h-full bg-gray-50 dark:bg-gray-900">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Apri Cibo</title>
+
+  <!-- Rendono la pagina "app-like" quando aggiunta alla Home su iPhone -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Apri Cibo">
+  <meta name="theme-color" content="#059669">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23059669'/%3E%3Ctext x='50' y='66' font-size='55' text-anchor='middle' fill='white'%3E📦%3C/text%3E%3C/svg%3E">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script>
+    tailwind.config = { darkMode: 'media' }
+  </script>
+  <style>
+    /* Evita lo zoom automatico iOS sugli input e nasconde la barra di scroll orizzontale */
+    input { font-size: 16px; }
+    html, body { overscroll-behavior-y: contain; }
+  </style>
+</head>
+<body class="h-full text-gray-800 dark:text-gray-100 font-sans">
+
+  <div class="min-h-screen flex flex-col max-w-xl mx-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+
+    <!-- Stato connessione -->
+    <div class="flex items-center justify-between mb-3 pt-2">
+      <h1 class="text-lg font-black flex items-center gap-2">
+        <span class="text-2xl">📦</span> Seleziona il cibo che hai aperto
+      </h1>
+      <span id="sync-status" class="text-[11px] font-semibold text-amber-500 flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Connessione...
+      </span>
+    </div>
+
+    <!-- Barra di ricerca -->
+    <div class="relative mb-3">
+      <span class="absolute left-3.5 top-3.5 text-gray-400 text-base">🔎</span>
+      <input
+        id="search-input"
+        type="text"
+        autofocus
+        autocomplete="off"
+        autocapitalize="none"
+        placeholder="Cerca un cibo da aprire..."
+        class="w-full pl-10 pr-10 py-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-base shadow-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+      >
+      <button id="clear-btn" onclick="clearSearch()" class="hidden absolute right-3 top-3 text-gray-400 text-lg leading-none">✕</button>
+    </div>
+
+    <!-- Toast di conferma -->
+    <div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-6 bg-emerald-600 text-white text-sm font-bold px-4 py-2.5 rounded-full shadow-lg z-50 transition-opacity"></div>
+
+    <!-- Risultati -->
+    <div id="results" class="flex-1 space-y-2 overflow-y-auto pb-4"></div>
+
+    <div id="empty-state" class="hidden flex-1 flex flex-col items-center justify-center text-center text-gray-400 gap-2 py-10">
+      <span class="text-4xl">🥫</span>
+      <p class="text-sm">Nessun cibo trovato</p>
+    </div>
+
+    <div id="idle-state" class="flex-1 flex flex-col items-center justify-center text-center text-gray-400 gap-2 py-10">
+      <span class="text-4xl">👆</span>
+      <p class="text-sm">Scrivi il nome di un cibo per trovarlo<br>in Frigo o Freezer</p>
+    </div>
+  </div>
+
+  <script>
+    // Stessa configurazione Firebase dell'app principale
+    const firebaseConfig = {
+      databaseURL: "https://freezer-3960e-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let fridgeData = {};
+    let freezerData = {};
+
+    const searchInput = document.getElementById('search-input');
+    const resultsEl = document.getElementById('results');
+    const emptyStateEl = document.getElementById('empty-state');
+    const idleStateEl = document.getElementById('idle-state');
+    const clearBtn = document.getElementById('clear-btn');
+
+    // Stato connessione (come nell'app principale)
+    db.ref(".info/connected").on("value", (snap) => {
+      const statusEl = document.getElementById('sync-status');
+      if (snap.val() === true) {
+        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online`;
+        statusEl.className = "text-[11px] font-semibold text-emerald-500 flex items-center gap-1";
+      } else {
+        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Connessione...`;
+        statusEl.className = "text-[11px] font-semibold text-amber-500 flex items-center gap-1";
+      }
+    });
+
+    db.ref("fridge_items").on("value", (snapshot) => {
+      fridgeData = snapshot.val() || {};
+      renderResults();
+    });
+    db.ref("freezer_items").on("value", (snapshot) => {
+      freezerData = snapshot.val() || {};
+      renderResults();
+    });
+
+    function normalize(str) {
+      return (str || '').toString().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // rimuove accenti
+    }
+
+    function renderResults() {
+      const query = normalize(searchInput.value.trim());
+      clearBtn.classList.toggle('hidden', query.length === 0);
+
+      if (query.length === 0) {
+        resultsEl.innerHTML = '';
+        idleStateEl.classList.remove('hidden');
+        emptyStateEl.classList.add('hidden');
+        return;
+      }
+      idleStateEl.classList.add('hidden');
+
+      const matches = [];
+      Object.entries(fridgeData).forEach(([id, item]) => {
+        if (normalize(item.name).includes(query)) matches.push({ id, loc: 'fridge', ...item });
+      });
+      Object.entries(freezerData).forEach(([id, item]) => {
+        if (normalize(item.name).includes(query)) matches.push({ id, loc: 'freezer', ...item });
+      });
+
+      // Cibi già aperti in fondo, poi ordine alfabetico
+      matches.sort((a, b) => {
+        if (!!a.isOpenPiece !== !!b.isOpenPiece) return a.isOpenPiece ? 1 : -1;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+      emptyStateEl.classList.toggle('hidden', matches.length > 0);
+      resultsEl.innerHTML = matches.map(item => renderCard(item)).join('');
+    }
+
+    function renderCard(item) {
+      const locIcon = item.loc === 'fridge' ? '🥗' : '❄️';
+      const locLabel = item.loc === 'fridge' ? 'Frigo' : 'Freezer';
+      const locColor = item.loc === 'fridge' ? 'emerald' : 'cyan';
+      const isOpen = !!item.isOpenPiece;
+      const qty = parseInt(item.qty) || 1;
+
+      return `
+        <button
+          ${isOpen ? 'disabled' : `onclick="markAsOpen('${item.id}', '${item.loc}', '${escapeAttr(item.name)}')"`}
+          class="w-full flex items-center justify-between gap-3 bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm text-left ${isOpen ? 'opacity-50' : 'active:scale-[0.98] transition-transform'}"
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="text-2xl flex-shrink-0">${locIcon}</span>
+            <div class="min-w-0">
+              <p class="font-bold text-sm truncate">${escapeHtml(item.name)}</p>
+              <p class="text-[11px] text-${locColor}-600 dark:text-${locColor}-400 font-semibold">
+                ${locLabel}${qty > 1 ? ' · x' + qty : ''}
+              </p>
+            </div>
+          </div>
+          ${isOpen
+            ? `<span class="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 px-2.5 py-1 rounded-full flex-shrink-0">APERTO</span>`
+            : `<span class="text-[10px] font-bold bg-${locColor}-50 text-${locColor}-700 dark:bg-${locColor}-900/30 dark:text-${locColor}-300 px-2.5 py-1 rounded-full flex-shrink-0">Segna aperto</span>`
+          }
+        </button>
+      `;
+    }
+
+    function escapeHtml(str) {
+      return (str || '').toString()
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function escapeAttr(str) {
+      return (str || '').toString().replace(/'/g, "\\'");
+    }
+
+    // Stessa logica di openItemPiece() dell'app principale
+    function markAsOpen(id, loc, name) {
+      const source = loc === 'fridge' ? fridgeData[id] : freezerData[id];
+      if (!source) return;
+
+      const path = loc === 'fridge' ? 'fridge_items' : 'freezer_items';
+      const currentQty = parseInt(source.qty) || 1;
+
+      if (currentQty > 1) {
+        db.ref(`${path}/${id}`).update({ qty: currentQty - 1 }, () => {
+          const openedItem = {
+            ...source,
+            name: `${source.name} (Aperto)`,
+            qty: 1,
+            isOpenPiece: true
+          };
+          db.ref(path).push(openedItem);
+          showToast(`✅ ${name} aperto (restano ${currentQty - 1})`);
+        });
+      } else {
+        db.ref(`${path}/${id}`).update({
+          name: source.name.includes('(Aperto)') ? source.name : `${source.name} (Aperto)`,
+          isOpenPiece: true
+        }, () => {
+          showToast(`✅ ${name} segnato come aperto`);
+        });
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.remove('hidden');
+      toast.style.opacity = '1';
+      setTimeout(() => { toast.style.opacity = '0'; }, 1800);
+      setTimeout(() => { toast.classList.add('hidden'); }, 2100);
+
+      // Pronta per il prossimo cibo: svuota la ricerca e ridà il focus
+      searchInput.value = '';
+      searchInput.focus();
+      renderResults();
+    }
+
+    function clearSearch() {
+      searchInput.value = '';
+      searchInput.focus();
+      renderResults();
+    }
+
+    searchInput.addEventListener('input', renderResults);
+    renderResults();
+  </script>
+</body>
+</html>

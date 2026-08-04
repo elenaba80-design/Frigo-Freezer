@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="it" class="h-full bg-gray-50 dark:bg-gray-900">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Il Mio Frigo & Freezer Cloud</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script>
+    tailwind.config = { darkMode: 'media' }
+  </script>
+</head>
+<body class="h-full text-gray-800 dark:text-gray-100 font-sans pb-24 md:pb-6">
+
+  <div class="max-w-6xl mx-auto min-h-screen flex flex-col px-4 py-4">
+
+    <header class="flex justify-between items-center mb-4 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('home')">
+        <div class="p-2.5 bg-emerald-50 dark:bg-emerald-900/40 rounded-xl text-emerald-600 dark:text-emerald-400">
+          <i data-lucide="thermometer-snowflake" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold leading-tight">Frigo & Freezer Cloud</h1>
+          <span id="sync-status" class="text-xs font-semibold text-amber-500 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Connessione in corso...
+          </span>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="openShelvesModal()" title="Gestisci Ripiani" class="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
+          <i data-lucide="layers" class="w-5 h-5"></i>
+        </button>
+        <button onclick="openCategoriesModal()" title="Gestisci Categorie" class="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
+          <i data-lucide="tags" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </header>
+
+    <nav class="flex bg-gray-200/60 dark:bg-gray-800/80 p-1 rounded-xl mb-4 text-xs font-semibold overflow-x-auto">
+      <button id="tab-btn-home" onclick="switchTab('home')" class="flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all bg-white dark:bg-gray-700 shadow-sm text-emerald-600 dark:text-emerald-400 font-bold">
+        🏠 Home
+      </button>
+      <button id="tab-btn-fridge" onclick="switchTab('fridge')" class="flex-1 min-w-[80px] py-2 rounded-lg text-center transition-all text-gray-500">
+        🥗 Frigo (<span id="fridge-count-nav">0</span>)
+      </button>
+      <button id="tab-btn-freezer" onclick="switchTab('freezer')" class="flex-1 min-w-[80px] py-2 rounded-lg text-center transition-all text-gray-500">
+        ❄️ Freezer (<span id="freezer-count-nav">0</span>)
+      </button>
+      <button id="tab-btn-add" onclick="switchTab('add')" class="flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all text-gray-500">
+        ➕ Aggiungi
+      </button>
+      <button id="tab-btn-recipes" onclick="switchTab('recipes')" class="flex-1 min-w-[90px] py-2 rounded-lg text-center transition-all text-gray-500">
+        🍳 Ricette
+      </button>
+    </nav>
+
+    <section id="tab-home" class="space-y-4 max-w-4xl mx-auto w-full">
+      <div class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 rounded-3xl shadow-md space-y-2 text-center md:text-left flex flex-col md:flex-row items-center justify-between">
+        <div class="space-y-1">
+          <h2 class="text-2xl font-black">Benvenuto nella tua Dispensa Smart</h2>
+          <p class="text-xs text-emerald-100 max-w-md">Gestisci in tempo reale gli alimenti in Frigo e Freezer, monitora le scadenze ed evita gli sprechi con le ricette automatiche.</p>
+        </div>
+        <button onclick="switchTab('add')" class="mt-3 md:mt-0 bg-white text-emerald-700 hover:bg-emerald-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow transition flex items-center gap-1.5">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> Aggiungi Alimento
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div onclick="switchTab('fridge')" class="cursor-pointer bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="p-3 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-2xl group-hover:scale-110 transition-transform">
+              <i data-lucide="salad" class="w-8 h-8"></i>
+            </div>
+            <span class="text-xs font-bold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+              <span id="home-fridge-count">0</span> prodotti
+            </span>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">🥗 Frigo Cloud</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Prodotti freschi, latticini, verdura e cibi pronti da consumare a breve.</p>
+            <div id="home-fridge-alert" class="mt-3 hidden text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+              <i data-lucide="alert-circle" class="w-4 h-4"></i> <span id="home-fridge-alert-text">0 cibi in scadenza</span>
+            </div>
+          </div>
+          <div class="pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
+            <span>Apri il Frigo</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+        <div onclick="switchTab('freezer')" class="cursor-pointer bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="p-3 bg-cyan-100 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400 rounded-2xl group-hover:scale-110 transition-transform">
+              <i data-lucide="snowflake" class="w-8 h-8"></i>
+            </div>
+            <span class="text-xs font-bold bg-cyan-50 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 px-3 py-1 rounded-full border border-cyan-200 dark:border-cyan-800">
+              <span id="home-freezer-count">0</span> congelati
+            </span>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">❄️ Freezer Cloud</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Alimenti congelati, scorte a lunga conservazione, carne e pesce.</p>
+          </div>
+          <div class="pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center text-xs font-bold text-cyan-600 dark:text-cyan-400">
+            <span>Apri il Freezer</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+      </div>
+
+      <div onclick="switchTab('recipes')" class="cursor-pointer bg-gradient-to-r from-amber-500 to-orange-600 text-white p-5 rounded-3xl shadow-sm hover:shadow-md transition-all flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="p-3 bg-white/20 rounded-2xl">
+            <i data-lucide="sparkles" class="w-7 h-7 text-amber-200"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-base">Cosa Posso Cucinare Oggi?</h4>
+            <p class="text-xs text-amber-100">Trova ricette tradizionali e vegane basate sugli ingredienti in Frigo e Freezer.</p>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-6 h-6"></i>
+      </div>
+    </section>
+
+    <section id="tab-fridge" class="hidden flex-1">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+        <div class="md:col-span-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-2">
+          <h2 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-2 px-1 flex items-center justify-between">
+            <span>Ripiani Frigo</span>
+            <i data-lucide="layers" class="w-4 h-4"></i>
+          </h2>
+          <div id="fridge-shelves-filter-bar" class="flex flex-col gap-1.5"></div>
+        </div>
+
+        <div class="md:col-span-3 space-y-3">
+          <div class="flex flex-col sm:flex-row gap-2">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-gray-400"></i>
+              <input type="text" id="fridge-search-input" oninput="handleSearch('fridge')" placeholder="Cerca cibo nel frigo..." 
+                class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+            <select id="fridge-sort-select" onchange="renderFridgeList()" class="px-3 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500 text-gray-700 dark:text-gray-200">
+              <option value="expiry">⏳ Scadenza più vicina</option>
+              <option value="urgent">🚨 Cibi in scadenza / Urgenti</option>
+              <option value="category">🏷️ Per Categoria</option>
+              <option value="alpha">🔤 Ordine Alfabetico (A-Z)</option>
+              <option value="shelf">📍 Per Ripiano</option>
+            </select>
+          </div>
+
+          <div id="fridge-food-list" class="flex flex-col space-y-3"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-freezer" class="hidden flex-1">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+        <div class="md:col-span-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-2">
+          <h2 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-2 px-1 flex items-center justify-between">
+            <span>Ripiani Freezer</span>
+            <i data-lucide="snowflake" class="w-4 h-4 text-cyan-500"></i>
+          </h2>
+          <div id="freezer-shelves-filter-bar" class="flex flex-col gap-1.5"></div>
+        </div>
+
+        <div class="md:col-span-3 space-y-3">
+          <div class="flex flex-col sm:flex-row gap-2">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-gray-400"></i>
+              <input type="text" id="freezer-search-input" oninput="handleSearch('freezer')" placeholder="Cerca alimenti nel freezer..." 
+                class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-cyan-500 outline-none">
+            </div>
+            <select id="freezer-sort-select" onchange="renderFreezerList()" class="px-3 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-cyan-500 text-gray-700 dark:text-gray-200">
+              <option value="expiry">⏳ Scadenza più vicina</option>
+              <option value="urgent">🚨 Cibi in scadenza / Urgenti</option>
+              <option value="category">🏷️ Per Categoria</option>
+              <option value="alpha">🔤 Ordine Alfabetico (A-Z)</option>
+              <option value="shelf">📍 Per Cassetto</option>
+            </select>
+          </div>
+
+          <div id="freezer-food-list" class="flex flex-col space-y-3"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-add" class="hidden space-y-4 bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm max-w-2xl mx-auto">
+      <h2 class="text-lg font-bold flex items-center gap-2 text-gray-800 dark:text-gray-100">
+        <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-500"></i> Nuovo Alimento
+      </h2>
+      <form id="add-food-form" onsubmit="handleAddFood(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Destinazione *</label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-700 font-bold text-sm text-emerald-800 dark:text-emerald-300">
+              <input type="radio" name="add-location" value="fridge" checked onchange="updateAddShelfDropdown()" class="accent-emerald-600">
+              <span>🥗 Frigo</span>
+            </label>
+            <label class="flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer bg-cyan-50/50 dark:bg-cyan-950/20 border-cyan-300 dark:border-cyan-700 font-bold text-sm text-cyan-800 dark:text-cyan-300">
+              <input type="radio" name="add-location" value="freezer" onchange="updateAddShelfDropdown()" class="accent-cyan-600">
+              <span>❄️ Freezer</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nome Alimento *</label>
+          <input type="text" id="add-name" required placeholder="Es. Mozzarella o Filetto di Salmone" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ripiano / Posizione *</label>
+            <select id="add-shelf" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Categoria *</label>
+            <select id="add-category" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none"></select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Quantità</label>
+            <input type="number" id="add-qty" min="1" value="1" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Data Inserimento</label>
+            <input type="date" id="add-entry-date" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-xs outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Scadenza</label>
+            <input type="date" id="add-expiry-date" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-xs outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Foto (Opzionale)</label>
+          <input type="file" id="add-photo" accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Note (Opzionale)</label>
+          <textarea id="add-notes" rows="2" placeholder="Es. Aperto il giorno 12, consumare entro 3 giorni..." class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none"></textarea>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition">
+          Salva nel Database
+        </button>
+      </form>
+    </section>
+
+    <section id="tab-recipes" class="hidden space-y-5 max-w-3xl mx-auto">
+      
+      <div class="bg-gradient-to-r from-amber-500 to-orange-600 text-white p-5 rounded-2xl shadow-md space-y-2">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-lg flex items-center gap-2">
+            <i data-lucide="utensils" class="w-5 h-5"></i> Ricette & Proposte AI Svuota-Frigo
+          </h2>
+          <button onclick="toggleAddRecipeForm()" class="text-xs font-bold bg-white text-orange-700 hover:bg-amber-50 px-3 py-2 rounded-xl transition flex items-center gap-1 shadow-sm">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Nuova Ricetta
+          </button>
+        </div>
+        <p class="text-xs text-amber-100">
+          Cerca per ingrediente, applica il filtro vegano oppure lasciati guidare dalle ricette automatiche generatrici di idee.
+        </p>
+      </div>
+
+      <div id="add-recipe-form-card" class="hidden bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+        <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-3">
+          <h3 class="font-bold text-base text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <i data-lucide="book-open" class="w-5 h-5 text-amber-500"></i> Salva Una Tua Ricetta Personale
+          </h3>
+          <button onclick="toggleAddRecipeForm()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <form onsubmit="handleSaveRecipe(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nome della Ricetta *</label>
+            <input type="text" id="recipe-title-input" required placeholder="Es. Hummus di Ceci, Carbonara, Pasta al Pesto..." class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ingredienti * (separati da virgola)</label>
+            <input type="text" id="recipe-ingredients-input" required placeholder="Es. Ceci, Limone, Olio, Aglio, Tahina" class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Link Ricetta (opzionale)</label>
+            <input type="url" id="recipe-link-input" placeholder="Es. https://www.esempio.it/ricetta" class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
+          </div>
+          <div class="flex items-center gap-2 pt-1">
+            <input type="checkbox" id="recipe-is-vegan-input" class="w-4 h-4 rounded text-emerald-600 accent-emerald-600">
+            <label for="recipe-is-vegan-input" class="text-xs font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">🌱 Ricetta 100% Vegana (Plant-Based)</label>
+          </div>
+          <button type="submit" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition shadow-sm">
+            Salva nelle Mie Ricette
+          </button>
+        </form>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+        
+        <div class="flex flex-col sm:flex-row gap-2">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-gray-400"></i>
+            <input type="text" id="recipe-search-input" oninput="renderRecipes()" placeholder="🔍 Cerca ricetta per ingrediente (es. Ceci, Zucchine, Uova)..." 
+              class="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+          </div>
+          <button id="btn-vegan-toggle" onclick="toggleVeganOnlyFilter()" 
+            class="px-4 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-emerald-500">
+            <span>🌱</span> Solo Vegane
+          </button>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider flex items-center gap-1.5">
+              <i data-lucide="check-square" class="w-4 h-4 text-emerald-500"></i> Filtra per ingredienti in Frigo/Freezer
+            </h3>
+            <div class="flex gap-2">
+              <button onclick="selectAllIngredients(true)" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">Seleziona Tutti</button>
+              <span class="text-gray-300">|</span>
+              <button onclick="selectAllIngredients(false)" class="text-[11px] text-gray-400 font-semibold hover:underline">Deseleziona Tutti</button>
+            </div>
+          </div>
+
+          <div id="recipe-ingredients-selector" class="flex flex-wrap gap-2 pt-1"></div>
+        </div>
+
+      </div>
+
+      <div class="space-y-3 bg-amber-50/30 dark:bg-amber-950/10 p-4 rounded-3xl border border-amber-100 dark:border-amber-900/30">
+        <h3 class="text-xs font-bold uppercase text-amber-700 dark:text-amber-400 tracking-wider px-1 flex items-center gap-2">
+          <i data-lucide="book-marked" class="w-4 h-4 text-amber-500"></i> 📖 Le Mie Ricette Personalizzate
+        </h3>
+        <div id="my-recipes-container" class="space-y-3"></div>
+      </div>
+
+      <div class="space-y-3 bg-teal-50/30 dark:bg-teal-950/10 p-4 rounded-3xl border border-teal-100 dark:border-teal-900/30">
+        <h3 class="text-xs font-bold uppercase text-teal-700 dark:text-teal-400 tracking-wider px-1 flex items-center gap-2">
+          <i data-lucide="bot" class="w-4 h-4 text-teal-500"></i> 🤖 Proposte Svuota-Frigo dell'AI
+        </h3>
+        <div id="ai-recipes-container" class="space-y-3"></div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div id="modal-edit-food" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-5 space-y-4 border border-gray-100 dark:border-gray-700">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-lg">Modifica Cibo</h3>
+        <button onclick="closeModal('modal-edit-food')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="edit-food-form" onsubmit="handleSaveEditFood(event)" class="space-y-3">
+        <input type="hidden" id="edit-id">
+        <input type="hidden" id="edit-location">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nome Alimento</label>
+          <input type="text" id="edit-name" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ripiano</label>
+            <select id="edit-shelf" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Categoria</label>
+            <select id="edit-category" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm"></select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Quantità</label>
+            <input type="number" id="edit-qty" min="1" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Data Scadenza</label>
+            <input type="date" id="edit-expiry-date" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Note</label>
+          <textarea id="edit-notes" rows="2" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm"></textarea>
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700">Salva Modifiche</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-edit-recipe" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-5 space-y-4 border border-gray-100 dark:border-gray-700 shadow-xl">
+      <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-3">
+        <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 flex items-center gap-2">
+          <i data-lucide="edit" class="w-5 h-5 text-amber-500"></i> Modifica Ricetta Personalizzata
+        </h3>
+        <button onclick="closeModal('modal-edit-recipe')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="edit-recipe-form" onsubmit="handleSaveEditRecipe(event)" class="space-y-3">
+        <input type="hidden" id="edit-recipe-id">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nome della Ricetta *</label>
+          <input type="text" id="edit-recipe-title" required class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ingredienti * (separati da virgola)</label>
+          <input type="text" id="edit-recipe-ingredients" required class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Link Ricetta (opzionale)</label>
+          <input type="url" id="edit-recipe-link" class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
+        </div>
+        <div class="flex items-center gap-2 pt-1">
+          <input type="checkbox" id="edit-recipe-is-vegan" class="w-4 h-4 rounded text-emerald-600 accent-emerald-600">
+          <label for="edit-recipe-is-vegan" class="text-xs font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">🌱 Ricetta 100% Vegana (Plant-Based)</label>
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition shadow-sm">
+          Salva Modifiche
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-shelves" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-5 space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-lg">Gestione Ripiani</h3>
+        <button onclick="closeModal('modal-shelves')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="flex gap-2 border-b border-gray-100 dark:border-gray-700 pb-2 text-xs font-bold">
+        <button id="manage-shelf-tab-fridge" onclick="switchManageShelfTab('fridge')" class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">🥗 Ripiani Frigo</button>
+        <button id="manage-shelf-tab-freezer" onclick="switchManageShelfTab('freezer')" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">❄️ Ripiani Freezer</button>
+      </div>
+      <form onsubmit="handleAddShelf(event)" class="flex gap-2">
+        <input type="text" id="new-shelf-name" placeholder="Es. Sportello Bottiglie o Cassetto 4" required class="flex-1 p-2 rounded-xl border text-sm dark:bg-gray-700">
+        <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm">Aggiungi</button>
+      </form>
+      <div id="shelves-manage-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <div id="modal-categories" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl border border-gray-100 dark:border-gray-700">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-lg">Gestione Categorie</h3>
+        <button onclick="closeModal('modal-categories')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="handleAddCategory(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nome Categoria *</label>
+          <input type="text" id="new-cat-name" placeholder="Es. Gelati e Surgelati" required class="w-full p-2.5 rounded-xl border text-sm dark:bg-gray-700 border-gray-200 dark:border-gray-600 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Scegli Icona Predefinita</label>
+          <div id="icon-picker-grid" class="grid grid-cols-6 gap-2 bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-xl border border-gray-200 dark:border-gray-600 max-h-28 overflow-y-auto"></div>
+          <div class="mt-3">
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Oppure Carica un'Immagine / Icona:</label>
+            <input type="file" id="custom-cat-icon-file" accept="image/*" onchange="handleCustomIconFile(event)" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+          </div>
+          <input type="hidden" id="new-cat-icon" value="🥛">
+          <div class="text-xs text-gray-500 mt-2 flex items-center gap-2">
+            <span>Anteprima Selezionata:</span>
+            <div id="selected-icon-preview" class="flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-md border font-bold text-lg overflow-hidden">🥛</div>
+          </div>
+        </div>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-bold text-sm transition">Aggiungi Categoria</button>
+      </form>
+      <div id="categories-manage-list" class="space-y-2 max-h-44 overflow-y-auto pt-2 border-t border-gray-100 dark:border-gray-700"></div>
+    </div>
+  </div>
+
+  <div id="modal-lightbox" onclick="closeModal('modal-lightbox')" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+    <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] rounded-2xl object-contain">
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      databaseURL: "https://freezer-3960e-default-rtdb.firebaseio.com"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let fridgeData = {};
+    let freezerData = {};
+    let fridgeShelvesData = {};
+    let freezerShelvesData = {};
+    let categoriesData = {};
+    let recipesData = {};
+
+    let selectedFridgeShelf = 'all';
+    let selectedFreezerShelf = 'all';
+    let activeManageShelfTab = 'fridge';
+    let fridgeSearchQuery = '';
+    let freezerSearchQuery = '';
+    let activeTab = 'home';
+    let selectedCustomIconBase64 = null;
+
+    let selectedAvailableIngredients = new Set();
+    let isIngredientStateInitialized = false;
+    let isVeganOnlyFilter = false;
+
+    const aiRecipesList = [
+      { id: 'ai_v1', title: "Curry Cremoso di Ceci e Verdure", ingredients: ["Ceci", "Verdure", "Riso", "Latte di Cocco"], vegan: true },
+      { id: 'ai_v2', title: "Padellata Croccante Tofu e Zucchine", ingredients: ["Tofu", "Zucchine", "Olio", "Salsa di Soia"], vegan: true },
+      { id: 'ai_v3', title: "Hummus Ricco con Bastoncini di Verdura", ingredients: ["Ceci", "Limone", "Olio", "Carote"], vegan: true },
+      { id: 'ai_v4', title: "Insalata Fresca Quinoa e Avocado", ingredients: ["Quinoa", "Avocado", "Pomodoro", "Insalata"], vegan: true },
+      { id: 'ai_v5', title: "Pasta al Pesto Fresco di Zucchine e Mandorle", ingredients: ["Pasta", "Zucchine", "Mandorle", "Olio"], vegan: true },
+      { id: 'ai_v6', title: "Zuppa Calda di Lenticchie e Pomodoro", ingredients: ["Lenticchie", "Pomodoro", "Carote", "Cipolla"], vegan: true },
+      { id: 'ai_v7', title: "Risotto Cremoso ai Funghi Trifolati", ingredients: ["Riso", "Funghi", "Aglio", "Olio"], vegan: true },
+      { id: 'ai1', title: "Frittata Soffice Svuota-Frigo", ingredients: ["Uova", "Formaggio", "Verdure"], vegan: false },
+      { id: 'ai2', title: "Insalatona Fresca con Mozzarella", ingredients: ["Insalata", "Pomodoro", "Mozzarella", "Uova"], vegan: false },
+      { id: 'ai3', title: "Pasta al Pomodoro e Parmigiano", ingredients: ["Pasta", "Pomodoro", "Formaggio"], vegan: false }
+    ];
+
+    const availableIcons = [
+      '🥛', '🧀', '🥓', '🥗', '🥦', '🥕', '🥫', '🍲', '🧃', '🥚', 
+      '🍗', '🥩', '🐟', '🍎', '🍇', '🍞', '🧈', '🍾', '🍮', '🥑', 
+      '🍋', '🫐', '🍟', '🥟', '📦', '🍦', '🧊', '🏷️'
+    ];
+
+    // Status Connessione
+    const connectedRef = db.ref(".info/connected");
+    connectedRef.on("value", (snap) => {
+      const statusEl = document.getElementById("sync-status");
+      if (snap.val() === true) {
+        statusEl.className = "text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1";
+        statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> 🟢 Sincronizzato online`;
+      } else {
+        statusEl.className = "text-xs font-semibold text-amber-500 flex items-center gap-1";
+        statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> ⚠️ Non connesso`;
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setupDefaultDates();
+      renderIconPicker();
+
+      db.ref("fridge_items").on("value", (snapshot) => {
+        fridgeData = snapshot.val() || {};
+        renderAll();
+      });
+
+      db.ref("freezer_items").on("value", (snapshot) => {
+        freezerData = snapshot.val() || {};
+        renderAll();
+      });
+
+      db.ref("fridge_shelves").on("value", (snapshot) => {
+        const val = snapshot.val();
+        if (!val) {
+          const defaults = {
+            s1: { name: 'Ripiano Superiore' },
+            s2: { name: 'Ripiano Centrale' },
+            s3: { name: 'Ripiano Inferiore' },
+            s4: { name: 'Cassetto Verdure' },
+            s5: { name: 'Sportello' }
+          };
+          db.ref("fridge_shelves").set(defaults);
+        } else {
+          fridgeShelvesData = val;
+          renderAll();
+        }
+      });
+
+      db.ref("freezer_shelves").on("value", (snapshot) => {
+        const val = snapshot.val();
+        if (!val) {
+          const defaults = {
+            fz1: { name: 'Cassetto Superiore' },
+            fz2: { name: 'Cassetto Centrale' },
+            fz3: { name: 'Cassetto Inferiore' }
+          };
+          db.ref("freezer_shelves").set(defaults);
+        } else {
+          freezerShelvesData = val;
+          renderAll();
+        }
+      });
+
+      db.ref("fridge_categories").on("value", (snapshot) => {
+        const val = snapshot.val();
+        if (!val) {
+          const defaults = {
+            c1: { name: 'Formaggi e Latticini', icon: '🥛' },
+            c2: { name: 'Salumi e Affettati', icon: '🥓' },
+            c3: { name: 'Frutta e Verdura', icon: '🥗' },
+            c4: { name: 'Carne e Pesce', icon: '🥩' },
+            c5: { name: 'Surgelati e Gelati', icon: '🍦' },
+            c6: { name: 'Salse e Condimenti', icon: '🥫' }
+          };
+          db.ref("fridge_categories").set(defaults);
+        } else {
+          categoriesData = val;
+          renderAll();
+        }
+      });
+
+      db.ref("fridge_recipes").on("value", (snapshot) => {
+        const val = snapshot.val();
+        if (!val) {
+          const defaultRecipes = {
+            r1: {
+              title: "Curry Veloce di Ceci",
+              ingredients: ["Ceci", "Verdure", "Riso"],
+              vegan: true
+            },
+            r2: {
+              title: "Frittata alle Zucchine",
+              ingredients: ["Uova", "Zucchine", "Formaggio"],
+              vegan: false
+            }
+          };
+          db.ref("fridge_recipes").set(defaultRecipes);
+        } else {
+          recipesData = val;
+          renderAll();
+        }
+      });
+    });
+
+    function setupDefaultDates() {
+      const today = new Date().toISOString().split('T')[0];
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + 7);
+      const expiryStr = expiry.toISOString().split('T')[0];
+
+      document.getElementById('add-entry-date').value = today;
+      document.getElementById('add-expiry-date').value = expiryStr;
+    }
+
+    function switchTab(tabId) {
+      activeTab = tabId;
+      ['home', 'fridge', 'freezer', 'add', 'recipes'].forEach(t => {
+        const section = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tabId) {
+          section.classList.remove('hidden');
+          btn.className = "flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all bg-white dark:bg-gray-700 shadow-sm text-emerald-600 dark:text-emerald-400 font-bold";
+        } else {
+          section.classList.add('hidden');
+          btn.className = "flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700";
+        }
+      });
+      lucide.createIcons();
+    }
+
+    function renderAll() {
+      renderHomeDashboard();
+      renderFridgeList();
+      renderFreezerList();
+      renderAddDropdowns();
+      renderShelvesManageList();
+      renderCategoriesManageList();
+      renderRecipes();
+      lucide.createIcons();
+    }
+
+    function renderHomeDashboard() {
+      const fridgeCount = Object.keys(fridgeData).length;
+      const freezerCount = Object.keys(freezerData).length;
+
+      document.getElementById('home-fridge-count').innerText = fridgeCount;
+      document.getElementById('fridge-count-nav').innerText = fridgeCount;
+      document.getElementById('home-freezer-count').innerText = freezerCount;
+      document.getElementById('freezer-count-nav').innerText = freezerCount;
+
+      const today = new Date();
+      let expiringCount = 0;
+      Object.values(fridgeData).forEach(item => {
+        if (item.expiryDate) {
+          const exp = new Date(item.expiryDate);
+          const diffDays = Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
+          if (diffDays <= 3) expiringCount++;
+        }
+      });
+
+      const alertBox = document.getElementById('home-fridge-alert');
+      if (expiringCount > 0) {
+        alertBox.classList.remove('hidden');
+        document.getElementById('home-fridge-alert-text').innerText = `${expiringCount} cibo/i in scadenza a breve!`;
+      } else {
+        alertBox.classList.add('hidden');
+      }
+    }
+
+    function duplicateFoodItem(id, loc) {
+      const source = loc === 'fridge' ? fridgeData[id] : freezerData[id];
+      if (!source) return;
+
+      const newItem = {
+        ...source,
+        entryDate: new Date().toISOString().split('T')[0]
+      };
+
+      const path = loc === 'fridge' ? 'fridge_items' : 'freezer_items';
+      db.ref(path).push(newItem);
+    }
+
+    function openItemPiece(id, loc) {
+      const source = loc === 'fridge' ? fridgeData[id] : freezerData[id];
+      if (!source) return;
+
+      const path = loc === 'fridge' ? 'fridge_items' : 'freezer_items';
+      const currentQty = parseInt(source.qty) || 1;
+
+      if (currentQty > 1) {
+        db.ref(`${path}/${id}`).update({ qty: currentQty - 1 }, () => {
+          const openedItem = {
+            ...source,
+            name: `${source.name} (Aperto)`,
+            qty: 1,
+            isOpenPiece: true
+          };
+          db.ref(path).push(openedItem);
+        });
+      } else {
+        db.ref(`${path}/${id}`).update({
+          name: source.name.includes('(Aperto)') ? source.name : `${source.name} (Aperto)`,
+          isOpenPiece: true
+        });
+      }
+    }
+
+    function renderFridgeList() {
+      const filterBar = document.getElementById('fridge-shelves-filter-bar');
+      filterBar.innerHTML = `<button onclick="filterShelf('fridge', 'all')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedFridgeShelf === 'all' ? 'bg-emerald-600 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">Tutti i ripiani</button>`;
+      
+      Object.entries(fridgeShelvesData).forEach(([id, s]) => {
+        filterBar.innerHTML += `<button onclick="filterShelf('fridge', '${id}')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedFridgeShelf === id ? 'bg-emerald-600 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">${s.name}</button>`;
+      });
+
+      const listContainer = document.getElementById('fridge-food-list');
+      listContainer.innerHTML = '';
+
+      let items = Object.entries(fridgeData).map(([id, item]) => ({ id, ...item }));
+
+      if (selectedFridgeShelf !== 'all') {
+        items = items.filter(i => i.shelf === selectedFridgeShelf);
+      }
+      if (fridgeSearchQuery) {
+        items = items.filter(i => i.name.toLowerCase().includes(fridgeSearchQuery.toLowerCase()));
+      }
+
+      const sortSelect = document.getElementById('fridge-sort-select');
+      const sortBy = sortSelect ? sortSelect.value : 'expiry';
+      
+      items.sort((a, b) => {
+        // I pezzi aperti vanno in alto SOLO per "expiry" (default) o "urgent"
+        if (sortBy === 'expiry' || sortBy === 'urgent') {
+          if (a.isOpenPiece && !b.isOpenPiece) return -1;
+          if (!a.isOpenPiece && b.isOpenPiece) return 1;
+        }
+
+        if (sortBy === 'expiry') {
+          if (!a.expiryDate) return 1;
+          if (!b.expiryDate) return -1;
+          return new Date(a.expiryDate) - new Date(b.expiryDate);
+        } else if (sortBy === 'urgent') {
+          const today = new Date();
+          const expA = a.expiryDate ? new Date(a.expiryDate) : new Date(8640000000000000);
+          const expB = b.expiryDate ? new Date(b.expiryDate) : new Date(8640000000000000);
+          const diffA = Math.ceil((expA - today) / (1000 * 60 * 60 * 24));
+          const diffB = Math.ceil((expB - today) / (1000 * 60 * 60 * 24));
+          return diffA - diffB;
+        } else if (sortBy === 'category') {
+          const catA = categoriesData[a.category]?.name || '';
+          const catB = categoriesData[b.category]?.name || '';
+          return catA.localeCompare(catB);
+        } else if (sortBy === 'alpha') {
+          return (a.name || '').localeCompare(b.name || '');
+        } else if (sortBy === 'shelf') {
+          const shelfA = fridgeShelvesData[a.shelf]?.name || '';
+          const shelfB = fridgeShelvesData[b.shelf]?.name || '';
+          return shelfA.localeCompare(shelfB);
+        }
+        return 0;
+      });
+
+      if (items.length === 0) {
+        listContainer.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">Nessun alimento trovato in questa sezione.</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const cat = categoriesData[item.category] || { name: 'Altro', icon: '📦' };
+        const shelf = fridgeShelvesData[item.shelf] || { name: 'Generale' };
+        const cardBgClass = item.isOpenPiece 
+          ? 'bg-amber-50/90 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 shadow-sm' 
+          : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm';
+        
+        listContainer.innerHTML += `
+          <div class="${cardBgClass} p-3 rounded-2xl border flex items-center justify-between gap-3 transition-all">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 flex-shrink-0 rounded-xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-xl overflow-hidden cursor-pointer" onclick="${item.photo ? `openLightbox('${item.photo}')` : ''}">
+                ${item.photo ? `<img src="${item.photo}" class="w-full h-full object-cover">` : getCategoryIconHtml(cat)}
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-bold text-sm leading-snug flex items-center gap-1.5 truncate">
+                  <span class="truncate">${item.name}</span>
+                  ${item.isOpenPiece ? `<span class="bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200 text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">APERTO</span>` : ''}
+                </h4>
+                <div class="text-[11px] text-gray-400 dark:text-gray-400 flex items-center gap-2">
+                  <span>📍 ${shelf.name}</span> • 
+                  <span>Qtà: ${item.qty || 1}</span>
+                </div>
+                ${item.expiryDate ? `<span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Scade: ${item.expiryDate}</span>` : ''}
+              </div>
+            </div>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <button onclick="openItemPiece('${item.id}', 'fridge')" class="p-2 text-gray-400 hover:text-amber-600" title="Segna pezzo come aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>
+              <button onclick="duplicateFoodItem('${item.id}', 'fridge')" class="p-2 text-gray-400 hover:text-emerald-600" title="Duplica alimento"><i data-lucide="copy" class="w-4 h-4"></i></button>
+              <button onclick="openEditModal('${item.id}', 'fridge')" class="p-2 text-gray-400 hover:text-emerald-600" title="Modifica"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+              <button onclick="deleteFoodItem('${item.id}', 'fridge')" class="p-2 text-gray-400 hover:text-red-500" title="Elimina"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function renderFreezerList() {
+      const filterBar = document.getElementById('freezer-shelves-filter-bar');
+      filterBar.innerHTML = `<button onclick="filterShelf('freezer', 'all')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedFreezerShelf === 'all' ? 'bg-cyan-600 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">Tutti i cassetti</button>`;
+      
+      Object.entries(freezerShelvesData).forEach(([id, s]) => {
+        filterBar.innerHTML += `<button onclick="filterShelf('freezer', '${id}')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedFreezerShelf === id ? 'bg-cyan-600 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">${s.name}</button>`;
+      });
+
+      const listContainer = document.getElementById('freezer-food-list');
+      listContainer.innerHTML = '';
+
+      let items = Object.entries(freezerData).map(([id, item]) => ({ id, ...item }));
+
+      if (selectedFreezerShelf !== 'all') {
+        items = items.filter(i => i.shelf === selectedFreezerShelf);
+      }
+      if (freezerSearchQuery) {
+        items = items.filter(i => i.name.toLowerCase().includes(freezerSearchQuery.toLowerCase()));
+      }
+
+      const sortSelect = document.getElementById('freezer-sort-select');
+      const sortBy = sortSelect ? sortSelect.value : 'expiry';
+
+      items.sort((a, b) => {
+        // I pezzi aperti vanno in alto SOLO per "expiry" (default) o "urgent"
+        if (sortBy === 'expiry' || sortBy === 'urgent') {
+          if (a.isOpenPiece && !b.isOpenPiece) return -1;
+          if (!a.isOpenPiece && b.isOpenPiece) return 1;
+        }
+
+        if (sortBy === 'expiry') {
+          if (!a.expiryDate) return 1;
+          if (!b.expiryDate) return -1;
+          return new Date(a.expiryDate) - new Date(b.expiryDate);
+        } else if (sortBy === 'urgent') {
+          const today = new Date();
+          const expA = a.expiryDate ? new Date(a.expiryDate) : new Date(8640000000000000);
+          const expB = b.expiryDate ? new Date(b.expiryDate) : new Date(8640000000000000);
+          const diffA = Math.ceil((expA - today) / (1000 * 60 * 60 * 24));
+          const diffB = Math.ceil((expB - today) / (1000 * 60 * 60 * 24));
+          return diffA - diffB;
+        } else if (sortBy === 'category') {
+          const catA = categoriesData[a.category]?.name || '';
+          const catB = categoriesData[b.category]?.name || '';
+          return catA.localeCompare(catB);
+        } else if (sortBy === 'alpha') {
+          return (a.name || '').localeCompare(b.name || '');
+        } else if (sortBy === 'shelf') {
+          const shelfA = freezerShelvesData[a.shelf]?.name || '';
+          const shelfB = freezerShelvesData[b.shelf]?.name || '';
+          return shelfA.localeCompare(shelfB);
+        }
+        return 0;
+      });
+
+      if (items.length === 0) {
+        listContainer.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">Nessun alimento congelato presente.</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const cat = categoriesData[item.category] || { name: 'Altro', icon: '📦' };
+        const shelf = freezerShelvesData[item.shelf] || { name: 'Generale' };
+        const cardBgClass = item.isOpenPiece 
+          ? 'bg-amber-50/90 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 shadow-sm' 
+          : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm';
+
+        listContainer.innerHTML += `
+          <div class="${cardBgClass} p-3 rounded-2xl border flex items-center justify-between gap-3 transition-all">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 flex-shrink-0 rounded-xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-xl overflow-hidden cursor-pointer" onclick="${item.photo ? `openLightbox('${item.photo}')` : ''}">
+                ${item.photo ? `<img src="${item.photo}" class="w-full h-full object-cover">` : getCategoryIconHtml(cat)}
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-bold text-sm leading-snug flex items-center gap-1.5 truncate">
+                  <span class="truncate">${item.name}</span>
+                  ${item.isOpenPiece ? `<span class="bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200 text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">APERTO</span>` : ''}
+                </h4>
+                <div class="text-[11px] text-gray-400 dark:text-gray-400 flex items-center gap-2">
+                  <span>❄️ ${shelf.name}</span> • 
+                  <span>Qtà: ${item.qty || 1}</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <button onclick="openItemPiece('${item.id}', 'freezer')" class="p-2 text-gray-400 hover:text-cyan-600" title="Segna pezzo come aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>
+              <button onclick="duplicateFoodItem('${item.id}', 'freezer')" class="p-2 text-gray-400 hover:text-cyan-600" title="Duplica alimento"><i data-lucide="copy" class="w-4 h-4"></i></button>
+              <button onclick="openEditModal('${item.id}', 'freezer')" class="p-2 text-gray-400 hover:text-cyan-600" title="Modifica"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+              <button onclick="deleteFoodItem('${item.id}', 'freezer')" class="p-2 text-gray-400 hover:text-red-500" title="Elimina"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function filterShelf(type, shelfId) {
+      if (type === 'fridge') selectedFridgeShelf = shelfId;
+      else selectedFreezerShelf = shelfId;
+      renderAll();
+    }
+
+    function handleSearch(type) {
+      if (type === 'fridge') fridgeSearchQuery = document.getElementById('fridge-search-input').value;
+      else freezerSearchQuery = document.getElementById('freezer-search-input').value;
+      renderAll();
+    }
+
+    function renderAddDropdowns() {
+      const loc = document.querySelector('input[name="add-location"]:checked')?.value || 'fridge';
+      const shelfSelect = document.getElementById('add-shelf');
+      const catSelect = document.getElementById('add-category');
+      if (!shelfSelect || !catSelect) return;
+
+      const currentShelf = shelfSelect.value;
+      const currentCat = catSelect.value;
+
+      shelfSelect.innerHTML = '';
+      const shelves = loc === 'fridge' ? fridgeShelvesData : freezerShelvesData;
+      Object.entries(shelves).forEach(([id, s]) => {
+        shelfSelect.innerHTML += `<option value="${id}">${s.name}</option>`;
+      });
+      if (currentShelf && shelves[currentShelf]) {
+        shelfSelect.value = currentShelf;
+      }
+
+      catSelect.innerHTML = '';
+      Object.entries(categoriesData).forEach(([id, c]) => {
+        catSelect.innerHTML += `<option value="${id}">${c.name}</option>`;
+      });
+      if (currentCat && categoriesData[currentCat]) {
+        catSelect.value = currentCat;
+      }
+    }
+
+    function updateAddShelfDropdown() {
+      renderAddDropdowns();
+    }
+
+    async function handleAddFood(e) {
+      e.preventDefault();
+      const loc = document.querySelector('input[name="add-location"]:checked').value;
+      const name = document.getElementById('add-name').value;
+      const shelf = document.getElementById('add-shelf').value;
+      const category = document.getElementById('add-category').value;
+      const qty = document.getElementById('add-qty').value;
+      const entryDate = document.getElementById('add-entry-date').value;
+      const expiryDate = document.getElementById('add-expiry-date').value;
+      const notes = document.getElementById('add-notes').value;
+      const photoFile = document.getElementById('add-photo').files[0];
+
+      let photoBase64 = '';
+      if (photoFile) {
+        photoBase64 = await convertFileToBase64(photoFile);
+      }
+
+      const newItem = {
+        name, shelf, category, qty: parseInt(qty), entryDate, expiryDate, notes, photo: photoBase64, isOpenPiece: false
+      };
+
+      const path = loc === 'fridge' ? 'fridge_items' : 'freezer_items';
+      db.ref(path).push(newItem, (err) => {
+        if (!err) {
+          document.getElementById('add-food-form').reset();
+          setupDefaultDates();
+          switchTab(loc);
+        }
+      });
+    }
+
+    function deleteFoodItem(id, loc) {
+      if (confirm("Vuoi davvero rimuovere questo alimento?")) {
+        const path = loc === 'fridge' ? 'fridge_items' : 'freezer_items';
+        db.ref(`${path}/${id}`).remove();
+      }
+    }
+
+    function openEditModal(id, loc) {
+      const item = loc === 'fridge' ? fridgeData[id] : freezerData[id];
+      if (!item) return;
+
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-location').value = loc;
+      document.getElementById('edit-name').value = item.name;
+      document.getElementById('edit-qty').value = item.qty || 1;
+      document.getElementById('edit-expiry-date').value = item.expiryDate || '';
+      document.getElementById('edit-notes').value = item.notes || '';
+
+      const shelfSelect = document.getElementById('edit-shelf');
+      shelfSelect.innerHTML = '';
+      const shelves = loc === 'fridge' ? fridgeShelvesData : freezerShelvesData;
+      Object.entries(shelves).forEach(([sId, s]) => {
+        shelfSelect.innerHTML += `<option value="${sId}">${s.name}</option>`;
+      });
+      shelfSelect.value = item.shelf;
+
+      const catSelect = document.getElementById('edit-category');
+      catSelect.innerHTML = '';
+      Object.entries(categoriesData).forEach(([cId, c]) => {
+        catSelect.innerHTML += `<option value="${cId}">${c.name}</option>`;
+      });
+      catSelect.value = item.category;
+
+      document.getElementById('modal-edit-food').classList.remove('hidden');
+    }
+
+    function handleSaveEditFood(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const loc = document.getElementById('edit-location').value;
+      const name = document.getElementById('edit-name').value;
+      const shelf = document.getElementById('edit-shelf').value;
+      const category = document.getElementById('edit-category').value;
+      const qty = parseInt(document.getElementById('edit-qty').value);
+      const expiryDate = document.getElementById('edit-expiry-date').value;
+      const notes = document.getElementById('edit-notes').value;
+
+      const path = loc === 'fridge' ? 'fridge_items' : 'freezer_items';
+      db.ref(`${path}/${id}`).update({
+        name, shelf, category, qty, expiryDate, notes
+      }, () => {
+        closeModal('modal-edit-food');
+      });
+    }
+
+    function toggleAddRecipeForm() {
+      const card = document.getElementById('add-recipe-form-card');
+      card.classList.toggle('hidden');
+    }
+
+    function toggleVeganOnlyFilter() {
+      isVeganOnlyFilter = !isVeganOnlyFilter;
+      const btn = document.getElementById('btn-vegan-toggle');
+      if (isVeganOnlyFilter) {
+        btn.className = "px-4 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 bg-emerald-600 text-white border-emerald-600 shadow-md";
+      } else {
+        btn.className = "px-4 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-emerald-500";
+      }
+      renderRecipes();
+    }
+
+    function handleSaveRecipe(e) {
+      e.preventDefault();
+      const title = document.getElementById('recipe-title-input').value.trim();
+      const rawIngredients = document.getElementById('recipe-ingredients-input').value;
+      const link = document.getElementById('recipe-link-input').value.trim();
+      const isVegan = document.getElementById('recipe-is-vegan-input').checked;
+
+      if (!title || !rawIngredients) return;
+
+      const ingredients = rawIngredients.split(',')
+        .map(i => i.trim())
+        .filter(i => i.length > 0);
+
+      const newRecipe = { title, ingredients, vegan: isVegan };
+      if (link) {
+        newRecipe.link = link;
+      }
+
+      db.ref("fridge_recipes").push(newRecipe, (err) => {
+        if (!err) {
+          document.getElementById('recipe-title-input').value = '';
+          document.getElementById('recipe-ingredients-input').value = '';
+          document.getElementById('recipe-link-input').value = '';
+          document.getElementById('recipe-is-vegan-input').checked = false;
+          toggleAddRecipeForm();
+        }
+      });
+    }
+
+    function openEditRecipeModal(id) {
+      const recipe = recipesData[id];
+      if (!recipe) return;
+
+      document.getElementById('edit-recipe-id').value = id;
+      document.getElementById('edit-recipe-title').value = recipe.title || '';
+      document.getElementById('edit-recipe-ingredients').value = (recipe.ingredients || []).join(', ');
+      document.getElementById('edit-recipe-link').value = recipe.link || '';
+      document.getElementById('edit-recipe-is-vegan').checked = !!recipe.vegan;
+
+      document.getElementById('modal-edit-recipe').classList.remove('hidden');
+    }
+
+    function handleSaveEditRecipe(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-recipe-id').value;
+      const title = document.getElementById('edit-recipe-title').value.trim();
+      const rawIngredients = document.getElementById('edit-recipe-ingredients').value;
+      const link = document.getElementById('edit-recipe-link').value.trim();
+      const isVegan = document.getElementById('edit-recipe-is-vegan').checked;
+
+      if (!title || !rawIngredients) return;
+
+      const ingredients = rawIngredients.split(',')
+        .map(i => i.trim())
+        .filter(i => i.length > 0);
+
+      const updatedRecipe = { title, ingredients, vegan: isVegan };
+      if (link) {
+        updatedRecipe.link = link;
+      } else {
+        updatedRecipe.link = null;
+      }
+
+      db.ref(`fridge_recipes/${id}`).update(updatedRecipe, (err) => {
+        if (!err) {
+          closeModal('modal-edit-recipe');
+        }
+      });
+    }
+
+    function deleteRecipe(id) {
+      if (confirm("Sei sicuro di voler eliminare questa ricetta personale?")) {
+        db.ref(`fridge_recipes/${id}`).remove();
+      }
+    }
+
+    function getAvailableFoodItemsList() {
+      const list = new Set();
+      Object.values(fridgeData).forEach(item => {
+        if (item.name) list.add(item.name.trim());
+      });
+      Object.values(freezerData).forEach(item => {
+        if (item.name) list.add(item.name.trim());
+      });
+      return Array.from(list).sort();
+    }
+
+    function toggleIngredientSelection(ingredientName) {
+      if (selectedAvailableIngredients.has(ingredientName)) {
+        selectedAvailableIngredients.delete(ingredientName);
+      } else {
+        selectedAvailableIngredients.add(ingredientName);
+      }
+      renderRecipes();
+    }
+
+    function selectAllIngredients(status) {
+      const available = getAvailableFoodItemsList();
+      if (status) {
+        selectedAvailableIngredients = new Set(available);
+      } else {
+        selectedAvailableIngredients.clear();
+      }
+      renderRecipes();
+    }
+
+    function renderRecipes() {
+      const searchInputEl = document.getElementById('recipe-search-input');
+      const searchQuery = searchInputEl ? searchInputEl.value.trim().toLowerCase() : '';
+
+      const availableItems = getAvailableFoodItemsList();
+
+      if (!isIngredientStateInitialized && availableItems.length > 0) {
+        selectedAvailableIngredients = new Set(availableItems);
+        isIngredientStateInitialized = true;
+      }
+
+      const selectorContainer = document.getElementById('recipe-ingredients-selector');
+      if (selectorContainer) {
+        if (availableItems.length === 0) {
+          selectorContainer.innerHTML = `<span class="text-xs text-gray-400 italic">Nessun alimento presente in Frigo o Freezer.</span>`;
+        } else {
+          selectorContainer.innerHTML = availableItems.map(item => {
+            const isSelected = selectedAvailableIngredients.has(item);
+            return `
+              <button onclick="toggleIngredientSelection('${item.replace(/'/g, "\\'")}')" 
+                class="px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+                  isSelected 
+                    ? 'bg-emerald-500 text-white border-emerald-600 shadow-sm' 
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-emerald-400'
+                }">
+                ${isSelected ? '✓ ' : '+ '} ${item}
+              </button>
+            `;
+          }).join('');
+        }
+      }
+
+      const activeIngredientsLower = Array.from(selectedAvailableIngredients).map(i => i.toLowerCase());
+
+      const processRecipeList = (list) => {
+        return list.map(recipe => {
+          const reqIngredients = recipe.ingredients || [];
+          let matchCount = 0;
+          const missingIngredients = [];
+
+          reqIngredients.forEach(req => {
+            const reqLower = req.toLowerCase().trim();
+            const hasItem = activeIngredientsLower.some(act => act.includes(reqLower) || reqLower.includes(act));
+            if (hasItem) matchCount++;
+            else missingIngredients.push(req);
+          });
+
+          const totalReq = reqIngredients.length;
+          const isReady = totalReq > 0 && matchCount === totalReq;
+
+          return { ...recipe, matchCount, totalReq, missingIngredients, isReady };
+        }).filter(recipe => {
+          if (isVeganOnlyFilter && !recipe.vegan) return false;
+          if (!searchQuery) return true;
+          const matchTitle = recipe.title.toLowerCase().includes(searchQuery);
+          const matchIng = recipe.ingredients.some(ing => ing.toLowerCase().includes(searchQuery));
+          return matchTitle || matchIng;
+        }).sort((a, b) => {
+          if (a.isReady && !b.isReady) return -1;
+          if (!a.isReady && b.isReady) return 1;
+          return (b.matchCount / (b.totalReq || 1)) - (a.matchCount / (a.totalReq || 1));
+        });
+      };
+
+      const userRecipesList = Object.entries(recipesData).map(([id, r]) => ({ id, ...r }));
+      const filteredUserRecipes = processRecipeList(userRecipesList);
+      const myRecipesContainer = document.getElementById('my-recipes-container');
+
+      if (myRecipesContainer) {
+        if (filteredUserRecipes.length === 0) {
+          myRecipesContainer.innerHTML = `<div class="p-4 bg-white/60 dark:bg-gray-800/60 rounded-2xl text-center text-xs text-gray-400">Nessuna ricetta personale trovata ${isVeganOnlyFilter ? 'vegana' : ''}.</div>`;
+        } else {
+          myRecipesContainer.innerHTML = filteredUserRecipes.map(recipe => renderRecipeCardHtml(recipe, true, activeIngredientsLower)).join('');
+        }
+      }
+
+      const filteredAiRecipes = processRecipeList(aiRecipesList);
+      const aiRecipesContainer = document.getElementById('ai-recipes-container');
+
+      if (aiRecipesContainer) {
+        if (filteredAiRecipes.length === 0) {
+          aiRecipesContainer.innerHTML = `<div class="p-4 bg-white/60 dark:bg-gray-800/60 rounded-2xl text-center text-xs text-gray-400">Nessuna proposta AI trovata per questi filtri.</div>`;
+        } else {
+          aiRecipesContainer.innerHTML = filteredAiRecipes.map(recipe => renderRecipeCardHtml(recipe, false, activeIngredientsLower)).join('');
+        }
+      }
+
+      lucide.createIcons();
+    }
+
+    function renderRecipeCardHtml(recipe, isUserRecipe, activeIngredientsLower) {
+      const ingredientsBadge = recipe.ingredients.map(ing => {
+        const ingLower = ing.toLowerCase().trim();
+        const hasIt = activeIngredientsLower.some(act => act.includes(ingLower) || ingLower.includes(act));
+        return `<span class="px-2 py-0.5 rounded-md text-[11px] font-medium ${
+          hasIt 
+            ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300' 
+            : 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 line-through'
+        }">${ing}</span>`;
+      }).join(' ');
+
+      return `
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border ${recipe.isReady ? 'border-emerald-400 dark:border-emerald-600 shadow-sm' : 'border-gray-100 dark:border-gray-700'} space-y-3">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h4 class="font-bold text-base text-gray-800 dark:text-gray-100">${recipe.title}</h4>
+                ${recipe.vegan ? `<span class="bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">🌱 Vegano</span>` : ''}
+                ${recipe.isReady 
+                  ? `<span class="bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">🟢 Pronto!</span>` 
+                  : `<span class="bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full">${recipe.matchCount}/${recipe.totalReq} Ingredienti</span>`
+                }
+              </div>
+            </div>
+            ${isUserRecipe ? `
+              <div class="flex items-center gap-1">
+                <button onclick="openEditRecipeModal('${recipe.id}')" class="text-gray-400 hover:text-amber-500 transition-colors p-1" title="Modifica Ricetta">
+                  <i data-lucide="edit-2" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteRecipe('${recipe.id}')" class="text-gray-400 hover:text-red-500 transition-colors p-1" title="Elimina Mia Ricetta">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            ` : `<span class="text-xs px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 font-semibold border border-teal-200 dark:border-teal-800">Proposta AI</span>`}
+          </div>
+
+          <div class="space-y-1.5">
+            <span class="text-[11px] font-bold uppercase text-gray-400 tracking-wider">Ingredienti:</span>
+            <div class="flex flex-wrap gap-1.5">
+              ${ingredientsBadge}
+            </div>
+          </div>
+
+          ${!recipe.isReady && recipe.missingIngredients.length > 0 ? `
+            <div class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-50/50 dark:bg-amber-950/20 p-2 rounded-xl">
+              ⚠️ Ti mancano: <strong>${recipe.missingIngredients.join(', ')}</strong>
+            </div>
+          ` : ''}
+
+          ${recipe.link ? `
+            <a href="${recipe.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Vedi ricetta completa
+            </a>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function openShelvesModal() {
+      document.getElementById('modal-shelves').classList.remove('hidden');
+      renderShelvesManageList();
+    }
+
+    function switchManageShelfTab(tab) {
+      activeManageShelfTab = tab;
+      document.getElementById('manage-shelf-tab-fridge').className = tab === 'fridge' ? "px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300" : "px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300";
+      document.getElementById('manage-shelf-tab-freezer').className = tab === 'freezer' ? "px-3 py-1.5 rounded-lg bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300" : "px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300";
+      renderShelvesManageList();
+    }
+
+    function renderShelvesManageList() {
+      const container = document.getElementById('shelves-manage-list');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const shelves = activeManageShelfTab === 'fridge' ? fridgeShelvesData : freezerShelvesData;
+      const path = activeManageShelfTab === 'fridge' ? 'fridge_shelves' : 'freezer_shelves';
+
+      Object.entries(shelves).forEach(([id, s]) => {
+        container.innerHTML += `
+          <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-100 dark:border-gray-600 text-sm gap-2">
+            <input type="text" value="${s.name.replace(/"/g, '&quot;')}" onchange="updateShelfName('${path}', '${id}', this.value)" class="bg-transparent font-medium text-gray-800 dark:text-gray-100 outline-none flex-1 focus:bg-white dark:focus:bg-gray-800 focus:ring-1 focus:ring-emerald-500 rounded px-1.5 py-0.5">
+            <button onclick="deleteShelf('${path}', '${id}')" class="text-gray-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function updateShelfName(path, id, newName) {
+      if (newName && newName.trim()) {
+        db.ref(`${path}/${id}`).update({ name: newName.trim() });
+      }
+    }
+
+    function handleAddShelf(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-shelf-name').value;
+      if (!name) return;
+
+      const path = activeManageShelfTab === 'fridge' ? 'fridge_shelves' : 'freezer_shelves';
+      db.ref(path).push({ name }, () => {
+        document.getElementById('new-shelf-name').value = '';
+      });
+    }
+
+    function deleteShelf(path, id) {
+      if (confirm("Eliminare questo ripiano?")) {
+        db.ref(`${path}/${id}`).remove();
+      }
+    }
+
+    function openCategoriesModal() {
+      document.getElementById('modal-categories').classList.remove('hidden');
+      renderCategoriesManageList();
+    }
+
+    function renderCategoriesManageList() {
+      const container = document.getElementById('categories-manage-list');
+      if (!container) return;
+      container.innerHTML = '';
+
+      Object.entries(categoriesData).forEach(([id, c]) => {
+        container.innerHTML += `
+          <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-100 dark:border-gray-600 text-sm gap-2">
+            <div class="flex items-center gap-2 flex-1">
+              <span class="w-6 h-6 flex items-center justify-center flex-shrink-0">${getCategoryIconHtml(c)}</span>
+              <input type="text" value="${c.name.replace(/"/g, '&quot;')}" onchange="updateCategoryName('${id}', this.value)" class="bg-transparent font-medium text-gray-800 dark:text-gray-100 outline-none w-full focus:bg-white dark:focus:bg-gray-800 focus:ring-1 focus:ring-emerald-500 rounded px-1.5 py-0.5">
+            </div>
+            <button onclick="deleteCategory('${id}')" class="text-gray-400 hover:text-red-500 p-1 flex-shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function updateCategoryName(id, newName) {
+      if (newName && newName.trim()) {
+        db.ref(`fridge_categories/${id}`).update({ name: newName.trim() });
+      }
+    }
+
+    function renderIconPicker() {
+      const grid = document.getElementById('icon-picker-grid');
+      if (!grid) return;
+      grid.innerHTML = availableIcons.map(icon => `
+        <button type="button" onclick="selectPresetIcon('${icon}')" class="h-9 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-lg transition-transform hover:scale-110">
+          ${icon}
+        </button>
+      `).join('');
+    }
+
+    function selectPresetIcon(icon) {
+      selectedCustomIconBase64 = null;
+      document.getElementById('new-cat-icon').value = icon;
+      document.getElementById('selected-icon-preview').innerHTML = icon;
+    }
+
+    async function handleCustomIconFile(e) {
+      const file = e.target.files[0];
+      if (file) {
+        selectedCustomIconBase64 = await convertFileToBase64(file);
+        document.getElementById('selected-icon-preview').innerHTML = `<img src="${selectedCustomIconBase64}" class="w-full h-full object-cover">`;
+      }
+    }
+
+    function handleAddCategory(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-cat-name').value;
+      const icon = document.getElementById('new-cat-icon').value;
+
+      if (!name) return;
+
+      const newCat = { name, icon };
+      if (selectedCustomIconBase64) {
+        newCat.customIcon = selectedCustomIconBase64;
+      }
+
+      db.ref("fridge_categories").push(newCat, () => {
+        document.getElementById('new-cat-name').value = '';
+        selectedCustomIconBase64 = null;
+        renderCategoriesManageList();
+      });
+    }
+
+    function deleteCategory(id) {
+      if (confirm("Eliminare questa categoria?")) {
+        db.ref(`fridge_categories/${id}`).remove();
+      }
+    }
+
+    function getCategoryIconHtml(category) {
+      if (category.customIcon) {
+        return `<img src="${category.customIcon}" class="w-full h-full object-cover rounded-md">`;
+      }
+      return category.icon || '📦';
+    }
+
+    function convertFileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    function openLightbox(imgSrc) {
+      document.getElementById('lightbox-img').src = imgSrc;
+      document.getElementById('modal-lightbox').classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
