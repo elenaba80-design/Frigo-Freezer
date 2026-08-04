@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-title" content="Frigo-Freezer">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#e8f4ff">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
   <title>Il Mio Frigo & Freezer Cloud</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
@@ -698,48 +702,111 @@
       db.ref(path).push(newItem);
     }
 
+    function getBaseFoodName(name) {
+      const value = (name || '').trim();
+      return value.endsWith(' (Aperto)')
+        ? value.substring(0, value.length - 9).trim()
+        : value;
+    }
+
+    function isSameOriginalFood(a, b) {
+      return (
+        getBaseFoodName(a.name).toLowerCase() === getBaseFoodName(b.name).toLowerCase() &&
+        (a.expiryDate || '') === (b.expiryDate || '') &&
+        (a.shelf || '') === (b.shelf || '') &&
+        (a.category || '') === (b.category || '')
+      );
+    }
+
     function openItemPiece(id, loc) {
       const source = loc === 'fridge' ? fridgeData[id] : freezerData[id];
-      if (!source) return;
+      if (!source || source.isOpenPiece) return;
 
       const path = loc === 'fridge' ? 'fridge_items' : 'freezer_items';
       const currentQty = parseInt(source.qty) || 1;
 
       if (currentQty > 1) {
-        db.ref(`${path}/${id}`).update({ qty: currentQty - 1 }, () => {
+        db.ref(`${path}/${id}`).update({ qty: currentQty - 1 }, (err) => {
+          if (err) return;
+
           const openedItem = {
             ...source,
-            name: `${source.name} (Aperto)`,
+            name: `${getBaseFoodName(source.name)} (Aperto)`,
             qty: 1,
-            isOpenPiece: true
+            isOpenPiece: true,
+            openedFromId: id
           };
+
           db.ref(path).push(openedItem);
         });
       } else {
+        // Se era l'ultimo pezzo, trasformiamo direttamente questa scheda in "Aperto".
         db.ref(`${path}/${id}`).update({
-          name: source.name.includes('(Aperto)') ? source.name : `${source.name} (Aperto)`,
-          isOpenPiece: true
+          name: `${getBaseFoodName(source.name)} (Aperto)`,
+          isOpenPiece: true,
+          openedFromId: id
         });
       }
     }
 
     function closeItemPiece(id, loc) {
       const source = loc === 'fridge' ? fridgeData[id] : freezerData[id];
-      if (!source) return;
+      if (!source || !source.isOpenPiece) return;
 
       const path = loc === 'fridge' ? 'fridge_items' : 'freezer_items';
-      
-      // Rimuove la stringa " (Aperto)" dal nome, se presente
-      let newName = source.name;
-      if (newName.endsWith(' (Aperto)')) {
-        newName = newName.substring(0, newName.length - 9);
+      const data = loc === 'fridge' ? fridgeData : freezerData;
+      const baseName = getBaseFoodName(source.name);
+
+      // Prima proviamo a tornare esattamente al gruppo da cui il pezzo è stato separato.
+      let originalId = source.openedFromId;
+
+      if (originalId && data[originalId] && !data[originalId].isOpenPiece) {
+        if (!isSameOriginalFood(data[originalId], source)) {
+          originalId = null;
+        }
+      } else {
+        originalId = null;
       }
 
-      // Aggiorna il database chiudendo il prodotto
-      db.ref(`${path}/${id}`).update({
-        name: newName,
-        isOpenPiece: false
-      });
+      // Compatibilità con i pezzi aperti creati dalla versione precedente,
+      // che non avevano ancora openedFromId.
+      if (!originalId) {
+        const candidate = Object.entries(data).find(([candidateId, item]) =>
+          candidateId !== id &&
+          !item.isOpenPiece &&
+          getBaseFoodName(item.name).toLowerCase() === baseName.toLowerCase() &&
+          (item.expiryDate || '') === (source.expiryDate || '') &&
+          (item.shelf || '') === (source.shelf || '') &&
+          (item.category || '') === (source.category || '')
+        );
+
+        if (candidate) {
+          originalId = candidate[0];
+        }
+      }
+
+      if (originalId) {
+        const originalItem = data[originalId];
+        const originalQty = parseInt(originalItem.qty) || 1;
+
+        // Esempio: 3 -> apri -> 2 + 1 aperto -> annulla -> 3.
+        db.ref(`${path}/${originalId}`).update({
+          qty: originalQty + 1
+        }, (err) => {
+          if (!err) {
+            db.ref(`${path}/${id}`).remove();
+          }
+        });
+      } else {
+        // Se il gruppo originale non esiste più, il pezzo torna comunque
+        // ad essere un normale alimento da 1 pezzo.
+        db.ref(`${path}/${id}`).update({
+          name: baseName,
+          qty: 1,
+          isOpenPiece: false,
+          openedFromId: null
+        });
+      }
     }
 
     function renderFridgeList() {
