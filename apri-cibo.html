@@ -151,11 +151,11 @@
       const qty = parseInt(item.qty) || 1;
 
       return `
-        <button
-          ${isOpen ? 'disabled' : `onclick="markAsOpen('${item.id}', '${item.loc}', '${escapeAttr(item.name)}')"`}
-          class="w-full flex items-center justify-between gap-3 bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm text-left ${isOpen ? 'opacity-50' : 'active:scale-[0.98] transition-transform'}"
-        >
-          <div class="flex items-center gap-3 min-w-0">
+        <div class="w-full flex items-center justify-between gap-2 bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+          <button
+            ${isOpen ? 'disabled' : `onclick="markAsOpen('${item.id}', '${item.loc}', '${escapeAttr(item.name)}')"`}
+            class="flex items-center gap-3 min-w-0 flex-1 text-left ${isOpen ? 'opacity-60' : 'active:scale-[0.98] transition-transform'}"
+          >
             <span class="text-2xl flex-shrink-0">${locIcon}</span>
             <div class="min-w-0">
               <p class="font-bold text-sm truncate">${escapeHtml(item.name)}</p>
@@ -163,12 +163,20 @@
                 ${locLabel}${qty > 1 ? ' · x' + qty : ''}
               </p>
             </div>
+          </button>
+
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            ${isOpen
+              ? `<span class="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 px-2.5 py-1 rounded-full">APERTO</span>`
+              : `<span class="text-[10px] font-bold bg-${locColor}-50 text-${locColor}-700 dark:bg-${locColor}-900/30 dark:text-${locColor}-300 px-2.5 py-1 rounded-full">Segna aperto</span>`
+            }
+            <button
+              onclick="deleteItem('${item.id}', '${item.loc}', '${escapeAttr(item.name)}')"
+              class="p-2 text-gray-300 hover:text-red-500 active:scale-90 transition-transform flex-shrink-0"
+              title="Elimina"
+            >🗑️</button>
           </div>
-          ${isOpen
-            ? `<span class="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 px-2.5 py-1 rounded-full flex-shrink-0">APERTO</span>`
-            : `<span class="text-[10px] font-bold bg-${locColor}-50 text-${locColor}-700 dark:bg-${locColor}-900/30 dark:text-${locColor}-300 px-2.5 py-1 rounded-full flex-shrink-0">Segna aperto</span>`
-          }
-        </button>
+        </div>
       `;
     }
 
@@ -207,6 +215,16 @@
           showToast(`✅ ${name} segnato come aperto`);
         });
       }
+    }
+
+    function deleteItem(id, loc, name) {
+      const ok = confirm(`Eliminare "${name}"?\nQuesta azione non si può annullare.`);
+      if (!ok) return;
+
+      const path = loc === 'fridge' ? 'fridge_items' : 'freezer_items';
+      db.ref(`${path}/${id}`).remove(() => {
+        showToast(`🗑️ ${name} eliminato`);
+      });
     }
 
     function showToast(msg) {
