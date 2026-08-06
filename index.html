@@ -55,6 +55,9 @@
       <button id="tab-btn-pantry" onclick="switchTab('pantry')" class="flex-1 min-w-[80px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
         🗄️ Dispensa (<span id="pantry-count-nav">0</span>)
       </button>
+      <button id="tab-btn-shopping" onclick="switchTab('shopping')" class="flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-bold text-indigo-600 dark:text-indigo-400">
+        🛒 Spesa (<span id="shopping-count-nav">0</span>)
+      </button>
       <button id="tab-btn-add" onclick="switchTab('add')" class="flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
         ➕ Aggiungi
       </button>
@@ -154,6 +157,25 @@
         </div>
         <i data-lucide="chevron-right" class="w-6 h-6"></i>
       </div>
+    </section>
+
+    <section id="tab-shopping" class="hidden max-w-3xl mx-auto w-full space-y-4">
+      <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-5 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="shopping-cart" class="w-6 h-6"></i> Lista della Spesa</h2>
+          <p class="text-xs text-blue-100 mt-1">Gli alimenti che hai finito. Esporta la lista sul tuo iPhone per portarla con te.</p>
+        </div>
+        <button onclick="shareShoppingList()" class="bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2 whitespace-nowrap">
+          <i data-lucide="share" class="w-4 h-4"></i> Esporta su Apple
+        </button>
+      </div>
+      
+      <form onsubmit="handleManualAddShopping(event)" class="flex gap-2">
+        <input type="text" id="manual-shopping-input" placeholder="Aggiungi qualcosa a mano (es. Latte, Detersivo)..." required class="flex-1 p-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl font-bold text-sm shadow-sm transition">Aggiungi</button>
+      </form>
+
+      <div id="shopping-list-container" class="space-y-2"></div>
     </section>
 
     <section id="tab-fridge" class="hidden flex-1">
@@ -542,6 +564,7 @@
     let fridgeData = {};
     let freezerData = {};
     let pantryData = {}; 
+    let shoppingData = {}; // Nuovo nodo
     
     let fridgeShelvesData = {};
     let freezerShelvesData = {};
@@ -601,6 +624,7 @@
       db.ref("fridge_items").on("value", (snapshot) => { fridgeData = snapshot.val() || {}; renderAll(); });
       db.ref("freezer_items").on("value", (snapshot) => { freezerData = snapshot.val() || {}; renderAll(); });
       db.ref("pantry_items").on("value", (snapshot) => { pantryData = snapshot.val() || {}; renderAll(); });
+      db.ref("shopping_items").on("value", (snapshot) => { shoppingData = snapshot.val() || {}; renderAll(); }); // Listener spesa
 
       db.ref("fridge_shelves").on("value", (snapshot) => {
         const val = snapshot.val();
@@ -647,14 +671,19 @@
 
     function switchTab(tabId) {
       activeTab = tabId;
-      ['home', 'fridge', 'freezer', 'pantry', 'add', 'recipes'].forEach(t => {
+      ['home', 'fridge', 'freezer', 'pantry', 'shopping', 'add', 'recipes'].forEach(t => { // Aggiunto shopping
         const section = document.getElementById(`tab-${t}`);
         const btn = document.getElementById(`tab-btn-${t}`);
         if (!section || !btn) return;
         
         if (t === tabId) {
           section.classList.remove('hidden');
-          btn.className = "flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all bg-white dark:bg-gray-700 shadow-sm text-emerald-600 dark:text-emerald-400 font-bold";
+          // Stilizzazione un po' diversa per la spesa
+          if(tabId === 'shopping') {
+            btn.className = "flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all bg-white dark:bg-gray-700 shadow-sm text-indigo-600 dark:text-indigo-400 font-bold";
+          } else {
+            btn.className = "flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all bg-white dark:bg-gray-700 shadow-sm text-emerald-600 dark:text-emerald-400 font-bold";
+          }
         } else {
           section.classList.add('hidden');
           btn.className = "flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300";
@@ -663,7 +692,6 @@
       lucide.createIcons();
     }
 
-    // Naviga direttamente su "Aggiungi" con ripiano pre-compilato
     function goToAddWithContext(loc) {
       let shelfToPreselect = 'all';
       if (loc === 'fridge') shelfToPreselect = selectedFridgeShelf;
@@ -729,6 +757,7 @@
       renderFridgeList();
       renderFreezerList();
       renderPantryList();
+      renderShoppingList(); // Nuovo render
       renderAddDropdowns();
       renderShelvesManageList();
       renderCategoriesManageList();
@@ -740,6 +769,7 @@
       const fridgeCount = Object.keys(fridgeData).length;
       const freezerCount = Object.keys(freezerData).length;
       const pantryCount = Object.keys(pantryData).length;
+      const shoppingCount = Object.keys(shoppingData).length;
 
       document.getElementById('home-fridge-count').innerText = fridgeCount;
       document.getElementById('fridge-count-nav').innerText = fridgeCount;
@@ -747,6 +777,7 @@
       document.getElementById('freezer-count-nav').innerText = freezerCount;
       document.getElementById('home-pantry-count').innerText = pantryCount;
       document.getElementById('pantry-count-nav').innerText = pantryCount;
+      document.getElementById('shopping-count-nav').innerText = shoppingCount;
 
       const today = new Date();
       let expiringCount = 0;
@@ -765,6 +796,79 @@
         alertBox.classList.add('hidden');
       }
     }
+
+    // --- NUOVA LOGICA SPESA ---
+    
+    function moveToShoppingList(id, loc) {
+      if (!confirm("Hai finito questo alimento? Verrà rimosso da qui e aggiunto alla Lista della Spesa.")) return;
+      
+      const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
+      const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
+      
+      if (source) {
+        db.ref("shopping_items").push({ name: getBaseFoodName(source.name), addedAt: new Date().toISOString() }, (err) => {
+          if (!err) db.ref(`${path}/${id}`).remove();
+        });
+      }
+    }
+
+    function handleManualAddShopping(e) {
+      e.preventDefault();
+      const input = document.getElementById('manual-shopping-input');
+      if (input.value.trim()) {
+        db.ref("shopping_items").push({ name: input.value.trim(), addedAt: new Date().toISOString() }, () => {
+          input.value = '';
+        });
+      }
+    }
+
+    function deleteShoppingItem(id) {
+      db.ref(`shopping_items/${id}`).remove();
+    }
+
+    function renderShoppingList() {
+      const container = document.getElementById('shopping-list-container');
+      if (!container) return;
+      
+      const items = Object.entries(shoppingData);
+      if (items.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">Niente da comprare, sei a posto! 🎉</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(([id, item]) => `
+        <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+          <span class="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <i data-lucide="circle" class="w-4 h-4 text-gray-300"></i> ${item.name}
+          </span>
+          <button onclick="deleteShoppingItem('${id}')" class="p-2 text-gray-400 hover:text-red-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+      `).join('');
+    }
+
+    async function shareShoppingList() {
+      const items = Object.values(shoppingData).map(i => i.name);
+      if (items.length === 0) {
+        alert("La lista è vuota!");
+        return;
+      }
+      
+      const listText = "Lista della Spesa:\n" + items.map(i => "- " + i).join('\n');
+      
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'La mia Spesa',
+            text: listText
+          });
+        } catch (error) {
+          console.log('Condivisione annullata o fallita', error);
+        }
+      } else {
+        alert("Il tuo browser non supporta la condivisione nativa. Ecco la lista da copiare:\n\n" + listText);
+      }
+    }
+    // ----------------------------
 
     function duplicateFoodItem(id, loc) {
       let source, path;
@@ -902,6 +1006,7 @@
               </div>
             </div>
             <div class="flex items-center gap-1 flex-shrink-0">
+              <button onclick="moveToShoppingList('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-indigo-500" title="Alimento finito? Aggiungi alla Spesa"><i data-lucide="shopping-cart" class="w-4 h-4"></i></button>
               ${item.isOpenPiece 
                 ? `<button onclick="closeItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Richiudi"><i data-lucide="package" class="w-4 h-4"></i></button>`
                 : `<button onclick="openItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-amber-600" title="Segna Aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>`
@@ -1038,7 +1143,6 @@
       });
     }
 
-    // Le funzioni per le ricette rimangono invariate per il corretto funzionamento dello svuota-tutto
     function toggleAddRecipeForm() { document.getElementById('add-recipe-form-card').classList.toggle('hidden'); }
     function toggleVeganOnlyFilter() {
       isVeganOnlyFilter = !isVeganOnlyFilter;
@@ -1063,7 +1167,6 @@
         selectedAvailableIngredients = new Set(availableItems);
         isIngredientStateInitialized = true;
       }
-      // ... logica intatta che crea i badge ricette per il div my-recipes-container e ai-recipes-container
       lucide.createIcons();
     }
     
