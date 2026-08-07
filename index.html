@@ -849,27 +849,23 @@
     }
 
     // --- NUOVA FUNZIONE CONDIVISIONE PER PROMEMORIA ---
-    async function shareShoppingList() {
+ async function shareShoppingList() {
       const items = Object.values(shoppingData).map(i => i.name);
       if (items.length === 0) {
         alert("La lista è vuota!");
         return;
       }
       
-      // Crea un elenco pulito solo con gli "a capo", fondamentale per l'iPhone
-      const listText = items.join('\n');
+      // Il trucco: puntino elenco e il vero ritorno a capo di sistema (\r\n)
+      const listText = items.map(i => "• " + i).join('\r\n');
       
       try {
-        // Copia il testo direttamente nella "memoria" del telefono
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(listText);
-          alert("✅ Lista salvata in memoria!\n\nOra chiudi qui, apri l'app 'Promemoria', fai finta di scrivere una nuova voce e tocca 'Incolla'.");
-        } else {
-          alert("Copia questo testo e incollalo in Promemoria:\n\n" + listText);
+          alert("✅ Lista salvata!\n\nApri Promemoria, tocca 'Nuovo' e incolla. Ora dovrebbe chiederti di separare le voci.");
         }
       } catch (err) {
         console.log("Copia appunti non riuscita", err);
-        alert("Copia questo testo e incollalo in Promemoria:\n\n" + listText);
       }
     }
     // --------------------------------------------------
