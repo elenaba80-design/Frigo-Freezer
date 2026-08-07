@@ -69,7 +69,7 @@
     <section id="tab-home" class="space-y-4 max-w-4xl mx-auto w-full">
       <div class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 rounded-3xl shadow-md space-y-2 text-center md:text-left flex flex-col md:flex-row items-center justify-between">
         <div class="space-y-1">
-          <h2 class="text-2xl font-black">Benvenuto nella tua Dispensa Smart</h2>
+          <h2 class="text-2xl font-black">Benvenuta nella tua Dispensa Smart</h2>
           <p class="text-xs text-emerald-100 max-w-md">Gestisci in tempo reale gli alimenti in Frigo, Freezer e Dispensa, monitora le scadenze ed evita gli sprechi con le ricette automatiche.</p>
         </div>
         <button onclick="switchTab('add')" class="mt-3 md:mt-0 bg-white text-emerald-700 hover:bg-emerald-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow transition flex items-center gap-1.5">
@@ -163,10 +163,10 @@
       <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-5 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="shopping-cart" class="w-6 h-6"></i> Lista della Spesa</h2>
-          <p class="text-xs text-blue-100 mt-1">Sincronizzata in tempo reale anche sul tuo Todoist.</p>
+          <p class="text-xs text-blue-100 mt-1">Condividi la lista con Bring o Promemoria.</p>
         </div>
         <button onclick="shareShoppingList()" class="bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2 whitespace-nowrap">
-          <i data-lucide="share" class="w-4 h-4"></i> Esporta su Apple
+          <i data-lucide="share" class="w-4 h-4"></i> Esporta su Apple / Bring
         </button>
       </div>
       
@@ -566,38 +566,6 @@
     }
     const db = firebase.database();
 
-   // ==========================================
-    // IMPOSTAZIONI TODOIST
-    // ==========================================
-    const TODOIST_TOKEN = "06e629223c1ddfd6a17de588bb12fe9d938d32a5";
-    const TODOIST_PROJECT_ID = ""; // Lascia vuoto per inviare nell'Inbox
-    
-    async function sendToTodoist(foodName) {
-      if (!TODOIST_TOKEN || TODOIST_TOKEN === "INSERISCI_QUI_IL_TUO_TOKEN") {
-        console.log("Token Todoist non configurato, invio saltato.");
-        return;
-      }
-      
-      const bodyData = { content: foodName };
-      if (TODOIST_PROJECT_ID && TODOIST_PROJECT_ID !== "") {
-          bodyData.project_id = TODOIST_PROJECT_ID;
-      }
-
-      try {
-        await fetch("https://api.todoist.com/rest/v2/tasks", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${TODOIST_TOKEN}`
-          },
-          body: JSON.stringify(bodyData)
-        });
-      } catch (err) {
-        console.error("Errore di invio a Todoist:", err);
-      }
-    }
-    // ==========================================
-
     let fridgeData = {};
     let freezerData = {};
     let pantryData = {}; 
@@ -623,17 +591,6 @@
     let selectedAvailableIngredients = new Set();
     let isIngredientStateInitialized = false;
     let isVeganOnlyFilter = false;
-
-    const aiRecipesList = [
-      { id: 'ai_v1', title: "Curry Cremoso di Ceci e Verdure", ingredients: ["Ceci", "Verdure", "Riso", "Latte di Cocco"], vegan: true },
-      { id: 'ai_v2', title: "Padellata Croccante Tofu e Zucchine", ingredients: ["Tofu", "Zucchine", "Olio", "Salsa di Soia"], vegan: true },
-      { id: 'ai_v3', title: "Hummus Ricco con Bastoncini di Verdura", ingredients: ["Ceci", "Limone", "Olio", "Carote"], vegan: true },
-      { id: 'ai_v4', title: "Insalata Fresca Quinoa e Avocado", ingredients: ["Quinoa", "Avocado", "Pomodoro", "Insalata"], vegan: true },
-      { id: 'ai_v5', title: "Pasta al Pesto Fresco di Zucchine e Mandorle", ingredients: ["Pasta", "Zucchine", "Mandorle", "Olio"], vegan: true },
-      { id: 'ai_v6', title: "Zuppa Calda di Lenticchie e Pomodoro", ingredients: ["Lenticchie", "Pomodoro", "Carote", "Cipolla"], vegan: true },
-      { id: 'ai_v7', title: "Risotto Cremoso ai Funghi Trifolati", ingredients: ["Riso", "Funghi", "Aglio", "Olio"], vegan: true },
-      { id: 'ai1', title: "Frittata Soffice Svuota-Frigo", ingredients: ["Uova", "Formaggio", "Verdure"], vegan: false }
-    ];
 
     const availableIcons = [
       '🥛', '🧀', '🥓', '🥗', '🥦', '🥕', '🥫', '🍲', '🧃', '🥚', 
@@ -832,18 +789,6 @@
       }
     }
     
-    // --- FUNZIONI CORRETTE PER IL CARRELLO E IL CESTINO ---
-
-    function addToShoppingList(id, loc) {
-      const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
-      if (source) {
-        const foodName = getBaseFoodName(source.name);
-        db.ref("shopping_items").push({ name: foodName, addedAt: new Date().toISOString() });
-        sendToTodoist(foodName); 
-        alert(foodName + " aggiunto alla Lista della Spesa! 🛒");
-      }
-    }
-
     function deleteFoodItem(id, loc) {
       const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
       if (!source) return;
@@ -852,7 +797,6 @@
         if (confirm("L'hai finito? Vuoi aggiungerlo alla Lista della Spesa?")) {
           const foodName = getBaseFoodName(source.name);
           db.ref("shopping_items").push({ name: foodName, addedAt: new Date().toISOString() });
-          sendToTodoist(foodName); 
         }
         
         const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
@@ -860,15 +804,12 @@
       }
     }
 
-    // --------------------------------------------------------
-
     function handleManualAddShopping(e) {
       e.preventDefault();
       const input = document.getElementById('manual-shopping-input');
       const foodName = input.value.trim();
       if (foodName) {
         db.ref("shopping_items").push({ name: foodName, addedAt: new Date().toISOString() }, () => {
-          sendToTodoist(foodName); 
           input.value = '';
         });
       }
@@ -898,6 +839,7 @@
       `).join('');
     }
 
+    // --- FUNZIONE AGGIORNATA PER CONDIVIDERE CON BRING E PROMEMORIA ---
     async function shareShoppingList() {
       const items = Object.values(shoppingData).map(i => i.name);
       if (items.length === 0) {
@@ -905,8 +847,22 @@
         return;
       }
       
-      const listText = "Lista della Spesa:\n" + items.map(i => "- " + i).join('\n');
+      const listText = items.map(i => "- " + i).join('\n');
       
+      if (navigator.canShare && navigator.canShare({ files: [] })) {
+        try {
+          const file = new File([listText], "spesa.txt", { type: "text/plain" });
+          await navigator.share({
+            title: 'La mia Spesa',
+            text: listText,
+            files: [file]
+          });
+          return;
+        } catch (e) {
+          console.log("Condivisione file saltata, uso il testo normale", e);
+        }
+      }
+
       if (navigator.share) {
         try {
           await navigator.share({
@@ -920,6 +876,7 @@
         alert("Il tuo browser non supporta la condivisione nativa. Ecco la lista da copiare:\n\n" + listText);
       }
     }
+    // -----------------------------------------------------------------
 
     function duplicateFoodItem(id, loc) {
       let source, path;
@@ -1057,7 +1014,6 @@
               </div>
             </div>
             <div class="flex items-center gap-1 flex-shrink-0">
-              <button onclick="addToShoppingList('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-indigo-500" title="Aggiungi alla Spesa senza eliminare"><i data-lucide="shopping-cart" class="w-4 h-4"></i></button>
               ${item.isOpenPiece 
                 ? `<button onclick="closeItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Richiudi"><i data-lucide="package" class="w-4 h-4"></i></button>`
                 : `<button onclick="openItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-amber-600" title="Segna Aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>`
