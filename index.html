@@ -163,10 +163,10 @@
       <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-5 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="shopping-cart" class="w-6 h-6"></i> Lista della Spesa</h2>
-          <p class="text-xs text-blue-100 mt-1">Condividi la lista con Bring o Promemoria.</p>
+          <p class="text-xs text-blue-100 mt-1">Esporta comodamente verso Promemoria di Apple.</p>
         </div>
         <button onclick="shareShoppingList()" class="bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2 whitespace-nowrap">
-          <i data-lucide="share" class="w-4 h-4"></i> Esporta su Apple / Bring
+          <i data-lucide="share" class="w-4 h-4"></i> Esporta su Apple
         </button>
       </div>
       
@@ -789,6 +789,15 @@
       }
     }
     
+    function addToShoppingList(id, loc) {
+      const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
+      if (source) {
+        const foodName = getBaseFoodName(source.name);
+        db.ref("shopping_items").push({ name: foodName, addedAt: new Date().toISOString() });
+        alert(foodName + " aggiunto alla Lista della Spesa! 🛒");
+      }
+    }
+
     function deleteFoodItem(id, loc) {
       const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
       if (!source) return;
@@ -839,7 +848,7 @@
       `).join('');
     }
 
-    // --- FUNZIONE AGGIORNATA PER CONDIVIDERE CON BRING E PROMEMORIA ---
+    // --- NUOVA FUNZIONE CONDIVISIONE PER PROMEMORIA ---
     async function shareShoppingList() {
       const items = Object.values(shoppingData).map(i => i.name);
       if (items.length === 0) {
@@ -847,22 +856,19 @@
         return;
       }
       
-      const listText = items.map(i => "- " + i).join('\n');
+      // Elenco pulito senza simboli iniziali
+      const listText = items.join('\n');
       
-      if (navigator.canShare && navigator.canShare({ files: [] })) {
-        try {
-          const file = new File([listText], "spesa.txt", { type: "text/plain" });
-          await navigator.share({
-            title: 'La mia Spesa',
-            text: listText,
-            files: [file]
-          });
-          return;
-        } catch (e) {
-          console.log("Condivisione file saltata, uso il testo normale", e);
+      try {
+        // Tenta di copiare direttamente negli appunti
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(listText);
         }
+      } catch (err) {
+        console.log("Copia appunti non riuscita", err);
       }
 
+      // Prova ad aprire il menu di condivisione di Apple
       if (navigator.share) {
         try {
           await navigator.share({
@@ -870,13 +876,13 @@
             text: listText
           });
         } catch (error) {
-          console.log('Condivisione annullata o fallita', error);
+          console.log('Condivisione annullata', error);
         }
       } else {
-        alert("Il tuo browser non supporta la condivisione nativa. Ecco la lista da copiare:\n\n" + listText);
+        alert("Lista copiata negli appunti! Apri Promemoria e incolla.");
       }
     }
-    // -----------------------------------------------------------------
+    // --------------------------------------------------
 
     function duplicateFoodItem(id, loc) {
       let source, path;
@@ -1014,6 +1020,7 @@
               </div>
             </div>
             <div class="flex items-center gap-1 flex-shrink-0">
+              <button onclick="addToShoppingList('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-indigo-500" title="Aggiungi alla Spesa senza eliminare"><i data-lucide="shopping-cart" class="w-4 h-4"></i></button>
               ${item.isOpenPiece 
                 ? `<button onclick="closeItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Richiudi"><i data-lucide="package" class="w-4 h-4"></i></button>`
                 : `<button onclick="openItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-amber-600" title="Segna Aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>`
