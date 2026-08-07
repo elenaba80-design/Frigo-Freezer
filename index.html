@@ -163,7 +163,7 @@
       <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-5 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="shopping-cart" class="w-6 h-6"></i> Lista della Spesa</h2>
-          <p class="text-xs text-blue-100 mt-1">Gli alimenti che hai finito. Esporta la lista sul tuo iPhone per portarla con te.</p>
+          <p class="text-xs text-blue-100 mt-1">Sincronizzata in tempo reale anche sul tuo Todoist.</p>
         </div>
         <button onclick="shareShoppingList()" class="bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2 whitespace-nowrap">
           <i data-lucide="share" class="w-4 h-4"></i> Esporta su Apple
@@ -566,6 +566,36 @@
     }
     const db = firebase.database();
 
+    // ==========================================
+    // IMPOSTAZIONI TODOIST
+    // ==========================================
+    const TODOIST_TOKEN = "157667_a0e2d22b188ef69824ae21f6";
+    const TODOIST_PROJECT_ID = "spesa-6hF8Vgmm42PQ4CX2"; 
+    
+    async function sendToTodoist(foodName) {
+      if (!TODOIST_TOKEN || TODOIST_TOKEN === "INSERISCI_QUI_IL_TUO_TOKEN") {
+        console.log("Token Todoist non configurato, invio saltato.");
+        return;
+      }
+      const bodyData = { content: foodName };
+      if (TODOIST_PROJECT_ID && TODOIST_PROJECT_ID !== "INSERISCI_QUI_IL_TUO_PROJECT_ID") {
+          bodyData.project_id = TODOIST_PROJECT_ID;
+      }
+      try {
+        await fetch("https://api.todoist.com/rest/v2/tasks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${TODOIST_TOKEN}`
+          },
+          body: JSON.stringify(bodyData)
+        });
+      } catch (err) {
+        console.error("Errore di invio a Todoist:", err);
+      }
+    }
+    // ==========================================
+
     let fridgeData = {};
     let freezerData = {};
     let pantryData = {}; 
@@ -609,7 +639,6 @@
       '🍋', '🫐', '🍟', '🥟', '📦', '🍦', '🧊', '🏷️', '🍪', '🍯'
     ];
 
-    // Status Connessione
     const connectedRef = db.ref(".info/connected");
     connectedRef.on("value", (snap) => {
       const statusEl = document.getElementById("sync-status");
@@ -801,19 +830,43 @@
       }
     }
     
+    // --- FUNZIONI CORRETTE PER IL CARRELLO E IL CESTINO ---
+
     function addToShoppingList(id, loc) {
       const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
       if (source) {
-        db.ref("shopping_items").push({ name: getBaseFoodName(source.name), addedAt: new Date().toISOString() });
-        alert(getBaseFoodName(source.name) + " aggiunto alla Lista della Spesa! 🛒");
+        const foodName = getBaseFoodName(source.name);
+        db.ref("shopping_items").push({ name: foodName, addedAt: new Date().toISOString() });
+        sendToTodoist(foodName); 
+        alert(foodName + " aggiunto alla Lista della Spesa! 🛒");
       }
     }
+
+    function deleteFoodItem(id, loc) {
+      const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
+      if (!source) return;
+
+      if (confirm("Vuoi davvero rimuovere questo alimento dal database?")) {
+        if (confirm("L'hai finito? Vuoi aggiungerlo alla Lista della Spesa?")) {
+          const foodName = getBaseFoodName(source.name);
+          db.ref("shopping_items").push({ name: foodName, addedAt: new Date().toISOString() });
+          sendToTodoist(foodName); 
+        }
+        
+        const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
+        db.ref(`${path}/${id}`).remove();
+      }
+    }
+
+    // --------------------------------------------------------
 
     function handleManualAddShopping(e) {
       e.preventDefault();
       const input = document.getElementById('manual-shopping-input');
-      if (input.value.trim()) {
-        db.ref("shopping_items").push({ name: input.value.trim(), addedAt: new Date().toISOString() }, () => {
+      const foodName = input.value.trim();
+      if (foodName) {
+        db.ref("shopping_items").push({ name: foodName, addedAt: new Date().toISOString() }, () => {
+          sendToTodoist(foodName); 
           input.value = '';
         });
       }
@@ -1091,22 +1144,6 @@
       });
     }
 
-    function deleteFoodItem(id, loc) {
-      const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
-      if (!source) return;
-
-      if (confirm("Vuoi davvero rimuovere questo alimento dal database?")) {
-        // La seconda domanda salva il prodotto nella spesa
-        if (confirm("L'hai finito? Vuoi aggiungerlo alla Lista della Spesa?")) {
-          db.ref("shopping_items").push({ name: getBaseFoodName(source.name), addedAt: new Date().toISOString() });
-        }
-        
-        // Alla fine rimuove il cibo dalla sua posizione originale
-        const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
-        db.ref(`${path}/${id}`).remove();
-      }
-    }
-
     function openEditModal(id, loc) {
       const item = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
       if (!item) return;
@@ -1257,7 +1294,6 @@
     function openLightbox(imgSrc) { document.getElementById('lightbox-img').src = imgSrc; document.getElementById('modal-lightbox').classList.remove('hidden'); }
     function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
     
-    // Funzione aggiunta per convertire la foto
     function convertFileToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
