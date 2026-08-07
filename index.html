@@ -566,7 +566,7 @@
     }
     const db = firebase.database();
 
-    // ==========================================
+   // ==========================================
     // IMPOSTAZIONI TODOIST
     // ==========================================
     const TODOIST_TOKEN = "06e629223c1ddfd6a17de588bb12fe9d938d32a5";
@@ -577,15 +577,14 @@
         console.log("Token Todoist non configurato, invio saltato.");
         return;
       }
+      
       const bodyData = { content: foodName };
       if (TODOIST_PROJECT_ID && TODOIST_PROJECT_ID !== "") {
           bodyData.project_id = TODOIST_PROJECT_ID;
       }
-      try {
-        const proxyUrl = "https://corsproxy.io/?";
-        const targetUrl = encodeURIComponent("https://api.todoist.com/rest/v2/tasks");
 
-        await fetch(proxyUrl + targetUrl, {
+      try {
+        await fetch("https://api.todoist.com/rest/v2/tasks", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -624,6 +623,17 @@
     let selectedAvailableIngredients = new Set();
     let isIngredientStateInitialized = false;
     let isVeganOnlyFilter = false;
+
+    const aiRecipesList = [
+      { id: 'ai_v1', title: "Curry Cremoso di Ceci e Verdure", ingredients: ["Ceci", "Verdure", "Riso", "Latte di Cocco"], vegan: true },
+      { id: 'ai_v2', title: "Padellata Croccante Tofu e Zucchine", ingredients: ["Tofu", "Zucchine", "Olio", "Salsa di Soia"], vegan: true },
+      { id: 'ai_v3', title: "Hummus Ricco con Bastoncini di Verdura", ingredients: ["Ceci", "Limone", "Olio", "Carote"], vegan: true },
+      { id: 'ai_v4', title: "Insalata Fresca Quinoa e Avocado", ingredients: ["Quinoa", "Avocado", "Pomodoro", "Insalata"], vegan: true },
+      { id: 'ai_v5', title: "Pasta al Pesto Fresco di Zucchine e Mandorle", ingredients: ["Pasta", "Zucchine", "Mandorle", "Olio"], vegan: true },
+      { id: 'ai_v6', title: "Zuppa Calda di Lenticchie e Pomodoro", ingredients: ["Lenticchie", "Pomodoro", "Carote", "Cipolla"], vegan: true },
+      { id: 'ai_v7', title: "Risotto Cremoso ai Funghi Trifolati", ingredients: ["Riso", "Funghi", "Aglio", "Olio"], vegan: true },
+      { id: 'ai1', title: "Frittata Soffice Svuota-Frigo", ingredients: ["Uova", "Formaggio", "Verdure"], vegan: false }
+    ];
 
     const availableIcons = [
       '🥛', '🧀', '🥓', '🥗', '🥦', '🥕', '🥫', '🍲', '🧃', '🥚', 
@@ -822,6 +832,8 @@
       }
     }
     
+    // --- FUNZIONI CORRETTE PER IL CARRELLO E IL CESTINO ---
+
     function addToShoppingList(id, loc) {
       const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
       if (source) {
@@ -847,6 +859,8 @@
         db.ref(`${path}/${id}`).remove();
       }
     }
+
+    // --------------------------------------------------------
 
     function handleManualAddShopping(e) {
       e.preventDefault();
