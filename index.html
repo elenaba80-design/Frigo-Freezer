@@ -856,30 +856,20 @@
         return;
       }
       
-      // Elenco pulito senza simboli iniziali
+      // Crea un elenco pulito solo con gli "a capo", fondamentale per l'iPhone
       const listText = items.join('\n');
       
       try {
-        // Tenta di copiare direttamente negli appunti
+        // Copia il testo direttamente nella "memoria" del telefono
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(listText);
+          alert("✅ Lista salvata in memoria!\n\nOra chiudi qui, apri l'app 'Promemoria', fai finta di scrivere una nuova voce e tocca 'Incolla'.");
+        } else {
+          alert("Copia questo testo e incollalo in Promemoria:\n\n" + listText);
         }
       } catch (err) {
         console.log("Copia appunti non riuscita", err);
-      }
-
-      // Prova ad aprire il menu di condivisione di Apple
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: 'La mia Spesa',
-            text: listText
-          });
-        } catch (error) {
-          console.log('Condivisione annullata', error);
-        }
-      } else {
-        alert("Lista copiata negli appunti! Apri Promemoria e incolla.");
+        alert("Copia questo testo e incollalo in Promemoria:\n\n" + listText);
       }
     }
     // --------------------------------------------------
