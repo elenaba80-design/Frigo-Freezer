@@ -1399,18 +1399,31 @@
         try {
           const arrayBuffer = await file.arrayBuffer();
           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          let extractedText = "";
+          let extractedLines = [];
 
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
-            const pageText = textContent.items.map(item => item.str).join("\n");
-            extractedText += pageText + "\n";
+            
+            // Raggruppa i frammenti per coordinata Y (stessa riga)
+            let linesMap = {};
+            textContent.items.forEach(item => {
+              const y = Math.round(item.transform[5]);
+              if (!linesMap[y]) linesMap[y] = [];
+              linesMap[y].push(item.str);
+            });
+
+            // Ordina le righe dall'alto verso il basso
+            const sortedYs = Object.keys(linesMap).map(Number).sort((a, b) => b - a);
+            sortedYs.forEach(y => {
+              const lineText = linesMap[y].join(" ").trim();
+              if (lineText) extractedLines.push(lineText);
+            });
           }
 
-          document.getElementById('receipt-text-input').value = extractedText;
+          document.getElementById('receipt-text-input').value = extractedLines.join("\n");
         } catch (err) {
-          alert("Impossibile estrarre il testo dal PDF. Prova a incollare il testo manualmente.");
+          alert("Impossibile estrarre il testo dal PDF. Prova ad incollarlo manualmente.");
         }
       } else {
         const reader = new FileReader();
@@ -1464,7 +1477,7 @@
       
       const ignoreKeywords = [
         'DOCUMENTO', 'COMMERCIALE', 'CHIUSI', 'P.IVA', 'CARTA', 'SOCIO', 
-        'SACCHETTO', 'SCONTO', 'TOTALE', 'BANCOMAT', 'RESTO', 'IMPORTO', 
+        'SCONTO', 'TOTALE', 'BANCOMAT', 'RESTO', 'IMPORTO', 
         'PAGATO', 'SERVER', 'ECR', 'FIRMA', 'SALDO', 'PUNTI', 'PAGE', 
         'SOURCE:', 'THE FOLLOWING TABLE', 'DIGIT', 'CASSA', 'OPER', 'AID', 
         'TCR', 'TAD', 'CID', 'AIP', 'TRANSAZIONE'
@@ -1634,7 +1647,6 @@
       lucide.createIcons();
     }
 
-    // RIMUOVI DALLA LISTA PARTE II
     function removePart2Item(idx) {
       mappedReceiptItems.splice(idx, 1);
       renderPart2List();
