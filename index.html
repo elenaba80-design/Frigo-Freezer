@@ -33,6 +33,10 @@
         </div>
       </div>
       <div class="flex gap-2">
+        <button onclick="openReceiptModal()" title="Importa Scontrino" class="p-2.5 bg-emerald-600 text-white rounded-xl shadow-sm hover:bg-emerald-700 transition flex items-center gap-1 text-xs font-bold">
+          <i data-lucide="receipt" class="w-5 h-5"></i>
+          <span class="hidden sm:inline">Importa Scontrino</span>
+        </button>
         <button onclick="openShelvesModal()" title="Gestisci Ripiani" class="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
           <i data-lucide="layers" class="w-5 h-5"></i>
         </button>
@@ -70,11 +74,16 @@
       <div class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 rounded-3xl shadow-md space-y-2 text-center md:text-left flex flex-col md:flex-row items-center justify-between">
         <div class="space-y-1">
           <h2 class="text-2xl font-black">Benvenuta nella tua Dispensa Smart</h2>
-          <p class="text-xs text-emerald-100 max-w-md">Gestisci in tempo reale gli alimenti in Frigo, Freezer e Dispensa, monitora le scadenze ed evita gli sprechi con le ricette automatiche.</p>
+          <p class="text-xs text-emerald-100 max-w-md">Gestisci in tempo reale gli alimenti in Frigo, Freezer e Dispensa, carica gli scontrini per l'archivio veloce ed evita gli sprechi.</p>
         </div>
-        <button onclick="switchTab('add')" class="mt-3 md:mt-0 bg-white text-emerald-700 hover:bg-emerald-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow transition flex items-center gap-1.5">
-          <i data-lucide="plus-circle" class="w-4 h-4"></i> Aggiungi Alimento
-        </button>
+        <div class="flex gap-2 mt-3 md:mt-0">
+          <button onclick="openReceiptModal()" class="bg-emerald-900/40 text-white hover:bg-emerald-900/60 border border-emerald-400/30 px-4 py-2.5 rounded-xl font-bold text-xs shadow transition flex items-center gap-1.5">
+            <i data-lucide="receipt" class="w-4 h-4"></i> Importa Scontrino
+          </button>
+          <button onclick="switchTab('add')" class="bg-white text-emerald-700 hover:bg-emerald-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow transition flex items-center gap-1.5">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Aggiungi
+          </button>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -163,11 +172,16 @@
       <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-5 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="shopping-cart" class="w-6 h-6"></i> Lista della Spesa</h2>
-          <p class="text-xs text-blue-100 mt-1">Condividi la lista con chi vuoi o salvala nelle tue app.</p>
+          <p class="text-xs text-blue-100 mt-1">Condividi la lista con chi vuoi o carica direttamente uno scontrino d'acquisto.</p>
         </div>
-        <button onclick="shareShoppingList()" class="bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2 whitespace-nowrap">
-          <i data-lucide="share-2" class="w-4 h-4"></i> Condividi Lista
-        </button>
+        <div class="flex gap-2">
+          <button onclick="openReceiptModal()" class="bg-emerald-500 text-white hover:bg-emerald-600 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2 whitespace-nowrap">
+            <i data-lucide="receipt" class="w-4 h-4"></i> Carica Scontrino
+          </button>
+          <button onclick="shareShoppingList()" class="bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2 whitespace-nowrap">
+            <i data-lucide="share-2" class="w-4 h-4"></i> Condividi Lista
+          </button>
+        </div>
       </div>
       
       <form onsubmit="handleManualAddShopping(event)" class="flex gap-2">
@@ -556,6 +570,96 @@
     <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] rounded-2xl object-contain">
   </div>
 
+  <div id="modal-receipt" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl max-w-xl w-full p-6 space-y-5 border border-gray-100 dark:border-gray-700 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-3">
+        <h3 class="font-bold text-lg flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+          <i data-lucide="receipt" class="w-6 h-6"></i> Importazione Scontrino Digitale
+        </h3>
+        <button onclick="closeModal('modal-receipt')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div id="receipt-step-upload" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Incolla qui il testo dello scontrino o file PDF/TXT</label>
+          <textarea id="receipt-text-input" rows="6" placeholder="Incolla il testo del tuo scontrino... (es. PANINI INTEGRALI 0,41 D, SEITAN NATURALE 4,23 B)" class="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-xs font-mono outline-none"></textarea>
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="flex-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 py-2.5 px-4 rounded-xl text-xs font-bold text-center cursor-pointer hover:bg-emerald-100 transition">
+            📁 Carica un File Scontrino
+            <input type="file" id="receipt-file-input" accept=".txt,.pdf,.png,.jpg" onchange="handleReceiptFileUpload(event)" class="hidden">
+          </label>
+          <button onclick="processReceiptText()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition flex items-center gap-1.5">
+            <span>Analizza Scontrino</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="receipt-step-process" class="hidden space-y-6">
+
+        <div id="receipt-part1-container" class="hidden bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-4 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between border-b border-amber-200/60 pb-2">
+            <span class="text-xs font-bold uppercase text-amber-800 dark:text-amber-400 flex items-center gap-1">
+              <i data-lucide="sparkles" class="w-4 h-4"></i> PARTE I: Cibo Nuovo (<span id="part1-current-index">1</span>/<span id="part1-total-count">0</span>)
+            </span>
+            <span id="part1-raw-text" class="text-[10px] font-mono bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md"></span>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Nome Alimento</label>
+              <input type="text" id="part1-name-input" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Ripiano Predefinito</label>
+                <select id="part1-shelf-select" class="w-full p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs outline-none"></select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Destinazione</label>
+                <select id="part1-location-select" class="w-full p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs outline-none">
+                  <option value="fridge">🥗 Frigo</option>
+                  <option value="pantry">🗄️ Dispensa</option>
+                  <option value="freezer">❄️ Freezer</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="part1-merge-alert" class="hidden bg-orange-100 dark:bg-orange-900/40 border border-orange-300 p-3 rounded-xl space-y-2">
+              <p class="text-xs text-orange-800 dark:text-orange-200 font-semibold" id="part1-merge-msg"></p>
+              <button onclick="confirmMergeNewItem()" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition">
+                🤝 Si, unisci al cibo esistente
+              </button>
+            </div>
+
+            <div class="flex gap-2 pt-1">
+              <button onclick="saveAndNextNewItem()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm">
+                Salva e Passa al Successivo
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="receipt-part2-container" class="space-y-3">
+          <h4 class="text-xs font-bold uppercase text-gray-400 tracking-wider flex items-center justify-between">
+            <span>PARTE II: Cibi Riconosciuti (<span id="part2-count">0</span>)</span>
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i>
+          </h4>
+          
+          <div id="part2-items-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+
+          <button id="btn-add-mass" onclick="addAllMassRecognizedItems()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md transition flex items-center justify-center gap-2">
+            <i data-lucide="check-check" class="w-4 h-4"></i>
+            <span>AGGIUNGI TUTTI IN MASSA IN DISPENSA/FRIGO</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <script>
     const firebaseConfig = {
       databaseURL: "https://freezer-3960e-default-rtdb.firebaseio.com"
@@ -570,6 +674,7 @@
     let freezerData = {};
     let pantryData = {}; 
     let shoppingData = {}; 
+    let masterDbData = {}; // VOCABOLARIO / ANAGRAFICA CIBI
     
     let fridgeShelvesData = {};
     let freezerShelvesData = {};
@@ -586,11 +691,16 @@
     let freezerSearchQuery = '';
     let pantrySearchQuery = '';
     let activeTab = 'home';
-    let selectedCustomIconBase64 = null;
 
     let selectedAvailableIngredients = new Set();
     let isIngredientStateInitialized = false;
     let isVeganOnlyFilter = false;
+
+    // VARIABILI PARSER SCONTRINO
+    let unmappedReceiptItems = [];
+    let mappedReceiptItems = [];
+    let currentUnmappedIndex = 0;
+    let currentMergeCandidate = null;
 
     const availableIcons = [
       '🥛', '🧀', '🥓', '🥗', '🥦', '🥕', '🥫', '🍲', '🧃', '🥚', 
@@ -618,6 +728,7 @@
       db.ref("freezer_items").on("value", (snapshot) => { freezerData = snapshot.val() || {}; renderAll(); });
       db.ref("pantry_items").on("value", (snapshot) => { pantryData = snapshot.val() || {}; renderAll(); });
       db.ref("shopping_items").on("value", (snapshot) => { shoppingData = snapshot.val() || {}; renderAll(); }); 
+      db.ref("master_db").on("value", (snapshot) => { masterDbData = snapshot.val() || {}; });
 
       db.ref("fridge_shelves").on("value", (snapshot) => {
         const val = snapshot.val();
@@ -828,7 +939,6 @@
       db.ref(`shopping_items/${id}`).remove();
     }
 
-    // --- NUOVA FUNZIONE CONDIVISIONE UNIVERSALE ---
     async function shareShoppingList() {
       const items = Object.values(shoppingData).map(i => i.name);
       if (items.length === 0) {
@@ -843,11 +953,9 @@
       };
       
       try {
-        // Usa l'API nativa di condivisione del dispositivo (Android/iOS/ChromeOS/Mac)
         if (navigator.share) {
           await navigator.share(shareData);
         } else if (navigator.clipboard) {
-          // Fallback se apri l'app da un browser desktop non compatibile
           await navigator.clipboard.writeText(shareData.text);
           alert("✅ Lista copiata negli appunti!");
         }
@@ -855,7 +963,6 @@
         console.log("Condivisione annullata o non riuscita", err);
       }
     }
-    // ----------------------------------------------
 
     function renderShoppingList() {
       const container = document.getElementById('shopping-list-container');
@@ -863,13 +970,11 @@
       
       const items = Object.entries(shoppingData);
       if (items.length === 0) {
-        // Rimuove temporaneamente la griglia per centrare il messaggio vuoto
         container.className = "block";
         container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">Niente da comprare, sei a posto! 🎉</div>`;
         return;
       }
 
-      // Ripristina la classe griglia quando ci sono elementi
       container.className = "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mt-4";
       container.innerHTML = items.map(([id, item]) => `
         <div onclick="deleteShoppingItem('${id}')" title="Tocca per rimuovere" class="cursor-pointer aspect-square flex flex-col items-center justify-center p-2 bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all group relative text-center">
@@ -883,7 +988,6 @@
         </div>
       `).join('');
       
-      // Essendo HTML iniettato dinamicamente, forziamo il rendering delle icone
       lucide.createIcons();
     }
 
@@ -1269,6 +1373,257 @@
         reader.onload = () => resolve(reader.result);
         reader.onerror = error => reject(error);
       });
+    }
+
+    // =========================================================
+    // LOGICA DI IMPORTAZIONE SCONTRINI E GESTIONE MASTER DB (PARTE I & PARTE II)
+    // =========================================================
+
+    function openReceiptModal() {
+      document.getElementById('receipt-step-upload').classList.remove('hidden');
+      document.getElementById('receipt-step-process').classList.add('hidden');
+      document.getElementById('receipt-text-input').value = '';
+      document.getElementById('modal-receipt').classList.remove('hidden');
+    }
+
+    function handleReceiptFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        document.getElementById('receipt-text-input').value = evt.target.result;
+      };
+      reader.readAsText(file);
+    }
+
+    // SIMILARITÀ LEVENSHTEIN PER DUPLICATI
+    function calcolaSimilarita(a, b) {
+      const s1 = (a || '').toLowerCase().trim();
+      const s2 = (b || '').toLowerCase().trim();
+      if (s1 === s2) return 1.0;
+      if (s1.includes(s2) || s2.includes(s1)) return 0.85;
+
+      const track = Array(s2.length + 1).fill(null).map(() => Array(s1.length + 1).fill(null));
+      for (let i = 0; i <= s1.length; i++) track[0][i] = i;
+      for (let j = 0; j <= s2.length; j++) track[j][0] = j;
+
+      for (let j = 1; j <= s2.length; j++) {
+        for (let i = 1; i <= s1.length; i++) {
+          const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+          track[j][i] = Math.min(
+            track[j][i - 1] + 1,
+            track[j - 1][i] + 1,
+            track[j - 1][i - 1] + indicator
+          );
+        }
+      }
+      return 1 - (track[s2.length][s1.length] / Math.max(s1.length, s2.length));
+    }
+
+    function pulisciVoceScontrino(raw) {
+      return raw.replace(/[\d,.]+\s*[DAB]/gi, '')
+                .replace(/X\d+[\d,.]*/gi, '')
+                .replace(/CONF|KG|G\d+|LT\d+|MCAT\.A|IGP|SF\|CE/gi, '')
+                .replace(/[-+]\d+[\d,.]*/g, '')
+                .trim();
+    }
+
+    function processReceiptText() {
+      const text = document.getElementById('receipt-text-input').value;
+      if (!text.trim()) {
+        alert("Inserisci o incolla il testo dello scontrino!");
+        return;
+      }
+
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const ignoreKeywords = ['DOCUMENTO', 'COMMERCIALE', 'CHIUSI', 'P.IVA', 'CARTA', 'SOCIO', 'SACCHETTO', 'SCONTO', 'TOTALE', 'BANCOMAT', 'RESTO', 'IMPORTO', 'PAGATO', 'Server', 'ECR', 'Firma', 'SALDO', 'PUNTI'];
+
+      unmappedReceiptItems = [];
+      mappedReceiptItems = [];
+
+      lines.forEach(line => {
+        const uppercaseLine = line.toUpperCase();
+        if (ignoreKeywords.some(k => uppercaseLine.includes(k))) return;
+        if (/^\d{2}\/\d{2}\/\d{4}/.test(line)) return;
+
+        const cleanedLine = pulisciVoceScontrino(line);
+        if (cleanedLine.length < 3) return;
+
+        // Cerca corrispondenza in master_db
+        let matchedMaster = null;
+        Object.entries(masterDbData).forEach(([id, item]) => {
+          const aliases = item.aliases || [];
+          if (item.name.toLowerCase() === cleanedLine.toLowerCase() || aliases.some(a => a.toLowerCase() === cleanedLine.toLowerCase())) {
+            matchedMaster = { id, ...item };
+          }
+        });
+
+        if (matchedMaster) {
+          mappedReceiptItems.push({ raw: line, cleaned: cleanedLine, master: matchedMaster });
+        } else {
+          unmappedReceiptItems.push({ raw: line, cleaned: cleanedLine });
+        }
+      });
+
+      document.getElementById('receipt-step-upload').classList.add('hidden');
+      document.getElementById('receipt-step-process').classList.remove('hidden');
+
+      currentUnmappedIndex = 0;
+      renderPart1CurrentItem();
+      renderPart2List();
+    }
+
+    function renderPart1CurrentItem() {
+      const container = document.getElementById('receipt-part1-container');
+      if (currentUnmappedIndex >= unmappedReceiptItems.length) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      container.classList.remove('hidden');
+      const item = unmappedReceiptItems[currentUnmappedIndex];
+
+      document.getElementById('part1-current-index').innerText = currentUnmappedIndex + 1;
+      document.getElementById('part1-total-count').innerText = unmappedReceiptItems.length;
+      document.getElementById('part1-raw-text').innerText = item.raw;
+      document.getElementById('part1-name-input').value = item.cleaned;
+
+      // Popola tendina ripiani
+      const shelfSelect = document.getElementById('part1-shelf-select');
+      shelfSelect.innerHTML = `<option value="">-- Cassetto Generale --</option>`;
+      Object.entries(fridgeShelvesData).forEach(([id, s]) => {
+        shelfSelect.innerHTML += `<option value="${id}">Frigo: ${s.name}</option>`;
+      });
+      Object.entries(pantryShelvesData).forEach(([id, s]) => {
+        shelfSelect.innerHTML += `<option value="${id}">Dispensa: ${s.name}</option>`;
+      });
+
+      // Controllo similarità / duplicati
+      const mergeAlert = document.getElementById('part1-merge-alert');
+      mergeAlert.classList.add('hidden');
+      currentMergeCandidate = null;
+
+      for (let [mId, mItem] of Object.entries(masterDbData)) {
+        const score = calcolaSimilarita(item.cleaned, mItem.name);
+        if (score >= 0.65) {
+          currentMergeCandidate = { id: mId, ...mItem };
+          document.getElementById('part1-merge-msg').innerText = `Alimento chiamato "${mItem.name}" già presente in DB. Vuoi unire?`;
+          mergeAlert.classList.remove('hidden');
+          break;
+        }
+      }
+
+      lucide.createIcons();
+    }
+
+    function confirmMergeNewItem() {
+      if (!currentMergeCandidate) return;
+      const item = unmappedReceiptItems[currentUnmappedIndex];
+
+      const updatedAliases = currentMergeCandidate.aliases || [];
+      if (!updatedAliases.includes(item.cleaned)) {
+        updatedAliases.push(item.cleaned);
+      }
+
+      db.ref(`master_db/${currentMergeCandidate.id}`).update({ aliases: updatedAliases }, () => {
+        mappedReceiptItems.push({
+          raw: item.raw,
+          cleaned: item.cleaned,
+          master: { ...currentMergeCandidate, aliases: updatedAliases }
+        });
+        currentUnmappedIndex++;
+        renderPart1CurrentItem();
+        renderPart2List();
+      });
+    }
+
+    function saveAndNextNewItem() {
+      const item = unmappedReceiptItems[currentUnmappedIndex];
+      const name = document.getElementById('part1-name-input').value.trim();
+      const shelf = document.getElementById('part1-shelf-select').value || 'generale';
+      const location = document.getElementById('part1-location-select').value;
+
+      if (!name) return;
+
+      const newMaster = {
+        name: name,
+        shelfDefault: shelf,
+        locationDefault: location,
+        aliases: [item.cleaned]
+      };
+
+      const newRef = db.ref("master_db").push(newMaster);
+      mappedReceiptItems.push({
+        raw: item.raw,
+        cleaned: item.cleaned,
+        master: { id: newRef.key, ...newMaster }
+      });
+
+      currentUnmappedIndex++;
+      renderPart1CurrentItem();
+      renderPart2List();
+    }
+
+    function renderPart2List() {
+      const list = document.getElementById('part2-items-list');
+      document.getElementById('part2-count').innerText = mappedReceiptItems.length;
+
+      if (mappedReceiptItems.length === 0) {
+        list.innerHTML = `<div class="text-xs text-gray-400 py-4 text-center">Nessun cibo pronto. Configura i cibi nuovi sopra.</div>`;
+        return;
+      }
+
+      list.innerHTML = mappedReceiptItems.map((item, idx) => {
+        const shelfName = fridgeShelvesData[item.master.shelfDefault]?.name || pantryShelvesData[item.master.shelfDefault]?.name || 'Generale';
+        return `
+          <div class="flex items-center justify-between p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
+            <div>
+              <div class="text-xs font-bold text-gray-800 dark:text-gray-100">${item.master.name}</div>
+              <div class="text-[10px] text-gray-400">📍 ${shelfName} • (${item.master.locationDefault || 'frigo'})</div>
+            </div>
+            <button onclick="editPart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function editPart2Item(idx) {
+      const removed = mappedReceiptItems.splice(idx, 1)[0];
+      unmappedReceiptItems.splice(currentUnmappedIndex, 0, { raw: removed.raw, cleaned: removed.cleaned });
+      renderPart1CurrentItem();
+      renderPart2List();
+    }
+
+    function addAllMassRecognizedItems() {
+      if (mappedReceiptItems.length === 0) {
+        alert("Nessun alimento pronto da inserire!");
+        return;
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + 7);
+      const defaultExpiry = expiry.toISOString().split('T')[0];
+
+      mappedReceiptItems.forEach(item => {
+        const targetLoc = item.master.locationDefault || 'fridge';
+        const path = targetLoc === 'fridge' ? 'fridge_items' : (targetLoc === 'freezer' ? 'freezer_items' : 'pantry_items');
+
+        db.ref(path).push({
+          name: item.master.name,
+          shelf: item.master.shelfDefault || 's1',
+          category: 'c1',
+          qty: 1,
+          entryDate: today,
+          expiryDate: defaultExpiry,
+          isOpenPiece: false
+        });
+      });
+
+      alert(`🚀 ${mappedReceiptItems.length} alimenti inseriti con successo nell'inventario!`);
+      closeModal('modal-receipt');
     }
   </script>
 </body>
