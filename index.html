@@ -12,8 +12,10 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
     tailwind.config = { darkMode: 'media' }
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
   </script>
 </head>
 <body class="h-full text-gray-800 dark:text-gray-100 font-sans pb-24 md:pb-6">
@@ -581,12 +583,12 @@
 
       <div id="receipt-step-upload" class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Incolla qui il testo dello scontrino o file PDF/TXT</label>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Incolla qui il testo dello scontrino o carica il PDF/File</label>
           <textarea id="receipt-text-input" rows="6" placeholder="Incolla il testo del tuo scontrino... (es. PANINI INTEGRALI 0,41 D, SEITAN NATURALE 4,23 B)" class="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-xs font-mono outline-none"></textarea>
         </div>
         <div class="flex items-center gap-3">
           <label class="flex-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 py-2.5 px-4 rounded-xl text-xs font-bold text-center cursor-pointer hover:bg-emerald-100 transition">
-            📁 Carica un File Scontrino
+            📁 Carica un File Scontrino (PDF/TXT)
             <input type="file" id="receipt-file-input" accept=".txt,.pdf,.png,.jpg" onchange="handleReceiptFileUpload(event)" class="hidden">
           </label>
           <button onclick="processReceiptText()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition flex items-center gap-1.5">
@@ -635,6 +637,9 @@
             </div>
 
             <div class="flex gap-2 pt-1">
+              <button onclick="skipCurrentNewItem()" class="px-4 py-2.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-200 font-bold rounded-xl text-xs transition">
+                🚫 Salta / Ignora
+              </button>
               <button onclick="saveAndNextNewItem()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm">
                 Salva e Passa al Successivo
               </button>
@@ -674,7 +679,7 @@
     let freezerData = {};
     let pantryData = {}; 
     let shoppingData = {}; 
-    let masterDbData = {}; // VOCABOLARIO / ANAGRAFICA CIBI
+    let masterDbData = {};
     
     let fridgeShelvesData = {};
     let freezerShelvesData = {};
@@ -1386,14 +1391,34 @@
       document.getElementById('modal-receipt').classList.remove('hidden');
     }
 
-    function handleReceiptFileUpload(e) {
+    async function handleReceiptFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        document.getElementById('receipt-text-input').value = evt.target.result;
-      };
-      reader.readAsText(file);
+
+      if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          let extractedText = "";
+
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join("\n");
+            extractedText += pageText + "\n";
+          }
+
+          document.getElementById('receipt-text-input').value = extractedText;
+        } catch (err) {
+          alert("Impossibile estrarre il testo dal PDF. Prova a incollare il testo manualmente.");
+        }
+      } else {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          document.getElementById('receipt-text-input').value = evt.target.result;
+        };
+        reader.readAsText(file);
+      }
     }
 
     // SIMILARITÀ LEVENSHTEIN PER DUPLICATI
@@ -1436,20 +1461,28 @@
       }
 
       const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      const ignoreKeywords = ['DOCUMENTO', 'COMMERCIALE', 'CHIUSI', 'P.IVA', 'CARTA', 'SOCIO', 'SACCHETTO', 'SCONTO', 'TOTALE', 'BANCOMAT', 'RESTO', 'IMPORTO', 'PAGATO', 'Server', 'ECR', 'Firma', 'SALDO', 'PUNTI'];
+      
+      const ignoreKeywords = [
+        'DOCUMENTO', 'COMMERCIALE', 'CHIUSI', 'P.IVA', 'CARTA', 'SOCIO', 
+        'SACCHETTO', 'SCONTO', 'TOTALE', 'BANCOMAT', 'RESTO', 'IMPORTO', 
+        'PAGATO', 'SERVER', 'ECR', 'FIRMA', 'SALDO', 'PUNTI', 'PAGE', 
+        'SOURCE:', 'THE FOLLOWING TABLE', 'DIGIT', 'CASSA', 'OPER', 'AID', 
+        'TCR', 'TAD', 'CID', 'AIP', 'TRANSAZIONE'
+      ];
 
       unmappedReceiptItems = [];
       mappedReceiptItems = [];
 
       lines.forEach(line => {
         const uppercaseLine = line.toUpperCase();
+
         if (ignoreKeywords.some(k => uppercaseLine.includes(k))) return;
         if (/^\d{2}\/\d{2}\/\d{4}/.test(line)) return;
+        if (/^[\d\s,.\-+*\/A-Z]{1,4}$/.test(line)) return;
 
         const cleanedLine = pulisciVoceScontrino(line);
         if (cleanedLine.length < 3) return;
 
-        // Cerca corrispondenza in master_db
         let matchedMaster = null;
         Object.entries(masterDbData).forEach(([id, item]) => {
           const aliases = item.aliases || [];
@@ -1464,6 +1497,11 @@
           unmappedReceiptItems.push({ raw: line, cleaned: cleanedLine });
         }
       });
+
+      if (unmappedReceiptItems.length === 0 && mappedReceiptItems.length === 0) {
+        alert("Nessun alimento trovato nello scontrino.");
+        return;
+      }
 
       document.getElementById('receipt-step-upload').classList.add('hidden');
       document.getElementById('receipt-step-process').classList.remove('hidden');
@@ -1488,7 +1526,6 @@
       document.getElementById('part1-raw-text').innerText = item.raw;
       document.getElementById('part1-name-input').value = item.cleaned;
 
-      // Popola tendina ripiani
       const shelfSelect = document.getElementById('part1-shelf-select');
       shelfSelect.innerHTML = `<option value="">-- Cassetto Generale --</option>`;
       Object.entries(fridgeShelvesData).forEach(([id, s]) => {
@@ -1498,7 +1535,6 @@
         shelfSelect.innerHTML += `<option value="${id}">Dispensa: ${s.name}</option>`;
       });
 
-      // Controllo similarità / duplicati
       const mergeAlert = document.getElementById('part1-merge-alert');
       mergeAlert.classList.add('hidden');
       currentMergeCandidate = null;
@@ -1514,6 +1550,12 @@
       }
 
       lucide.createIcons();
+    }
+
+    // SALTA L'ELEMENTO SENZA AGGIUNGERLO (PER SACCHETTI O OGGETTI NON DESIDERATI)
+    function skipCurrentNewItem() {
+      currentUnmappedIndex++;
+      renderPart1CurrentItem();
     }
 
     function confirmMergeNewItem() {
@@ -1581,12 +1623,21 @@
               <div class="text-xs font-bold text-gray-800 dark:text-gray-100">${item.master.name}</div>
               <div class="text-[10px] text-gray-400">📍 ${shelfName} • (${item.master.locationDefault || 'frigo'})</div>
             </div>
-            <button onclick="editPart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+            <div class="flex gap-1">
+              <button onclick="editPart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-emerald-600" title="Modifica"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+              <button onclick="removePart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-red-500" title="Rimuovi"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
           </div>
         `;
       }).join('');
 
       lucide.createIcons();
+    }
+
+    // RIMUOVI DALLA LISTA PARTE II
+    function removePart2Item(idx) {
+      mappedReceiptItems.splice(idx, 1);
+      renderPart2List();
     }
 
     function editPart2Item(idx) {
