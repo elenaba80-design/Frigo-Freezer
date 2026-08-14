@@ -12,10 +12,8 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
     tailwind.config = { darkMode: 'media' }
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
   </script>
 </head>
 <body class="h-full text-gray-800 dark:text-gray-100 font-sans pb-24 md:pb-6">
@@ -187,52 +185,41 @@
       </div>
       
       <form onsubmit="handleManualAddShopping(event)" class="flex gap-2">
-        <input type="text" id="manual-shopping-input" placeholder="Aggiungi qualcosa a mano (es. Latte, Detersivo)..." required class="flex-1 p-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+        <input type="text" id="manual-shopping-input" placeholder="Aggiungi qualcosa a mano (es. Latte, Tofu, Lievito)..." required class="flex-1 p-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
         <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl font-bold text-sm shadow-sm transition">Aggiungi</button>
       </form>
 
       <div id="shopping-list-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mt-4"></div>
     </section>
 
-    <section id="tab-fridge" class="hidden flex-1">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-        <div class="md:col-span-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-2">
-          <h2 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-2 px-1 flex items-center justify-between">
-            <span>Ripiani Frigo</span>
-            <i data-lucide="layers" class="w-4 h-4"></i>
-          </h2>
-          <div id="fridge-shelves-filter-bar" class="flex flex-col gap-1.5"></div>
-        </div>
-
-        <div class="md:col-span-3 space-y-3">
-          <div class="flex flex-col sm:flex-row gap-2">
-            <div class="relative flex-1">
-              <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-gray-400"></i>
-              <input type="text" id="fridge-search-input" oninput="handleSearch('fridge')" placeholder="Cerca nel frigo..." 
-                class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-            </div>
-            <select id="fridge-sort-select" onchange="renderFridgeList()" class="px-3 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500 text-gray-700 dark:text-gray-200">
-              <option value="expiry">⏳ Scadenza più vicina</option>
-              <option value="urgent">🚨 Cibi in scadenza / Urgenti</option>
-              <option value="category">🏷️ Per Categoria</option>
-              <option value="alpha">🔤 Ordine Alfabetico (A-Z)</option>
-              <option value="shelf">📍 Per Ripiano</option>
-            </select>
-            <button onclick="goToAddWithContext('fridge')" class="px-3 py-2.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-300 rounded-xl text-xs font-bold whitespace-nowrap flex items-center justify-center gap-1 transition-colors">
-              <i data-lucide="plus" class="w-4 h-4"></i> Aggiungi Qui
-            </button>
+    <section id="tab-fridge" class="hidden flex-1 max-w-4xl mx-auto w-full">
+      <div class="space-y-3">
+        <div class="flex flex-col sm:flex-row gap-2">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-gray-400"></i>
+            <input type="text" id="fridge-search-input" oninput="handleSearch('fridge')" placeholder="Cerca nel frigo..." 
+              class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
           </div>
-
-          <div id="fridge-food-list" class="flex flex-col space-y-3"></div>
+          <select id="fridge-sort-select" onchange="renderFridgeList()" class="px-3 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500 text-gray-700 dark:text-gray-200">
+            <option value="expiry">⏳ Scadenza più vicina</option>
+            <option value="urgent">🚨 Cibi in scadenza / Urgenti</option>
+            <option value="category">🏷️ Per Categoria</option>
+            <option value="alpha">🔤 Ordine Alfabetico (A-Z)</option>
+          </select>
+          <button onclick="goToAddWithContext('fridge')" class="px-3 py-2.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-300 rounded-xl text-xs font-bold whitespace-nowrap flex items-center justify-center gap-1 transition-colors">
+            <i data-lucide="plus" class="w-4 h-4"></i> Aggiungi Qui
+          </button>
         </div>
+
+        <div id="fridge-food-list" class="flex flex-col space-y-3"></div>
       </div>
     </section>
 
-    <section id="tab-freezer" class="hidden flex-1">
+    <section id="tab-freezer" class="hidden flex-1 max-w-5xl mx-auto w-full">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
         <div class="md:col-span-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-2">
           <h2 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-2 px-1 flex items-center justify-between">
-            <span>Ripiani Freezer</span>
+            <span>Cassetti Freezer</span>
             <i data-lucide="snowflake" class="w-4 h-4 text-cyan-500"></i>
           </h2>
           <div id="freezer-shelves-filter-bar" class="flex flex-col gap-1.5"></div>
@@ -262,7 +249,7 @@
       </div>
     </section>
 
-    <section id="tab-pantry" class="hidden flex-1">
+    <section id="tab-pantry" class="hidden flex-1 max-w-5xl mx-auto w-full">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
         <div class="md:col-span-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-2">
           <h2 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-2 px-1 flex items-center justify-between">
@@ -296,7 +283,7 @@
       </div>
     </section>
 
-    <section id="tab-add" class="hidden space-y-4 bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm max-w-2xl mx-auto">
+    <section id="tab-add" class="hidden space-y-4 bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm max-w-2xl mx-auto w-full">
       <h2 class="text-lg font-bold flex items-center gap-2 text-gray-800 dark:text-gray-100">
         <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-500"></i> Nuovo Alimento
       </h2>
@@ -321,15 +308,15 @@
 
         <div>
           <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nome Alimento *</label>
-          <input type="text" id="add-name" required placeholder="Es. Pasta integrale, Mozzarella..." class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none">
+          <input type="text" id="add-name" required placeholder="Es. Pasta integrale, Mozzarella, Tofu..." class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none">
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div id="add-shelf-container">
             <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ripiano / Posizione *</label>
-            <select id="add-shelf" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none"></select>
+            <select id="add-shelf" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none"></select>
           </div>
-          <div>
+          <div id="add-cat-container">
             <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Categoria *</label>
             <select id="add-category" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none"></select>
           </div>
@@ -341,7 +328,7 @@
             <input type="number" id="add-qty" min="1" value="1" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Data Inserimento</label>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Inserimento</label>
             <input type="date" id="add-entry-date" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-xs outline-none">
           </div>
           <div>
@@ -366,8 +353,8 @@
       </form>
     </section>
 
-    <section id="tab-recipes" class="hidden space-y-5 max-w-3xl mx-auto">
-       <div class="bg-gradient-to-r from-amber-500 to-orange-600 text-white p-5 rounded-2xl shadow-md space-y-2">
+    <section id="tab-recipes" class="hidden space-y-5 max-w-3xl mx-auto w-full">
+      <div class="bg-gradient-to-r from-amber-500 to-orange-600 text-white p-5 rounded-2xl shadow-md space-y-2">
         <div class="flex items-center justify-between">
           <h2 class="font-bold text-lg flex items-center gap-2">
             <i data-lucide="utensils" class="w-5 h-5"></i> Ricette & Proposte AI Svuota-Tutto
@@ -377,12 +364,12 @@
           </button>
         </div>
         <p class="text-xs text-amber-100">
-          Cerca per ingrediente, applica il filtro vegano oppure lasciati guidare dalle ricette automatiche.
+          Cerca per ingrediente, applica il filtro vegano oppure lasciati ispirare dalle ricette basate sulle tue scorte.
         </p>
       </div>
 
       <div id="add-recipe-form-card" class="hidden bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
-         <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-3">
+        <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-3">
           <h3 class="font-bold text-base text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <i data-lucide="book-open" class="w-5 h-5 text-amber-500"></i> Salva Una Tua Ricetta Personale
           </h3>
@@ -391,14 +378,14 @@
         <form onsubmit="handleSaveRecipe(event)" class="space-y-3">
           <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nome della Ricetta *</label>
-            <input type="text" id="recipe-title-input" required placeholder="Es. Hummus di Ceci..." class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
+            <input type="text" id="recipe-title-input" required placeholder="Es. Hummus di Ceci, Tofu marinato..." class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ingredienti * (separati da virgola)</label>
             <input type="text" id="recipe-ingredients-input" required placeholder="Es. Ceci, Limone, Olio, Aglio, Tahina" class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Link Ricetta (opzionale)</label>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Link Ricetta / Procedimento (opzionale)</label>
             <input type="url" id="recipe-link-input" placeholder="Es. https://www.esempio.it/ricetta" class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
           </div>
           <div class="flex items-center gap-2 pt-1">
@@ -415,7 +402,7 @@
         <div class="flex flex-col sm:flex-row gap-2">
           <div class="relative flex-1">
             <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-gray-400"></i>
-            <input type="text" id="recipe-search-input" oninput="renderRecipes()" placeholder="🔍 Cerca ricetta per ingrediente..." 
+            <input type="text" id="recipe-search-input" oninput="renderRecipes()" placeholder="🔍 Cerca ricetta per titolo o ingrediente..." 
               class="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
           </div>
           <button id="btn-vegan-toggle" onclick="toggleVeganOnlyFilter()" 
@@ -435,7 +422,7 @@
               <button onclick="selectAllIngredients(false)" class="text-[11px] text-gray-400 font-semibold hover:underline">Deseleziona Tutti</button>
             </div>
           </div>
-          <div id="recipe-ingredients-selector" class="flex flex-wrap gap-2 pt-1"></div>
+          <div id="recipe-ingredients-selector" class="flex flex-wrap gap-2 pt-1 max-h-36 overflow-y-auto"></div>
         </div>
       </div>
 
@@ -469,10 +456,10 @@
           <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nome Alimento</label>
           <input type="text" id="edit-name" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm">
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div id="edit-shelf-group">
             <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ripiano</label>
-            <select id="edit-shelf" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm"></select>
+            <select id="edit-shelf" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm"></select>
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Categoria</label>
@@ -516,6 +503,10 @@
           <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ingredienti * (separati da virgola)</label>
           <input type="text" id="edit-recipe-ingredients" required class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
         </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Link Ricetta (opzionale)</label>
+          <input type="url" id="edit-recipe-link" placeholder="https://..." class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
+        </div>
         <div class="flex items-center gap-2 pt-1">
           <input type="checkbox" id="edit-recipe-is-vegan" class="w-4 h-4 rounded text-emerald-600 accent-emerald-600">
           <label for="edit-recipe-is-vegan" class="text-xs font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">🌱 Ricetta 100% Vegana</label>
@@ -530,16 +521,15 @@
   <div id="modal-shelves" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
     <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-5 space-y-4">
       <div class="flex justify-between items-center">
-        <h3 class="font-bold text-lg">Gestione Ripiani</h3>
+        <h3 class="font-bold text-lg">Gestione Ripiani & Scaffali</h3>
         <button onclick="closeModal('modal-shelves')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       <div class="flex gap-2 border-b border-gray-100 dark:border-gray-700 pb-2 text-[11px] sm:text-xs font-bold overflow-x-auto">
-        <button id="manage-shelf-tab-fridge" onclick="switchManageShelfTab('fridge')" class="px-2 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 whitespace-nowrap">🥗 Frigo</button>
-        <button id="manage-shelf-tab-freezer" onclick="switchManageShelfTab('freezer')" class="px-2 py-1.5 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">❄️ Freezer</button>
-        <button id="manage-shelf-tab-pantry" onclick="switchManageShelfTab('pantry')" class="px-2 py-1.5 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">🗄️ Dispensa</button>
+        <button id="manage-shelf-tab-freezer" onclick="switchManageShelfTab('freezer')" class="px-3 py-1.5 rounded-lg bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300 whitespace-nowrap">❄️ Cassetti Freezer</button>
+        <button id="manage-shelf-tab-pantry" onclick="switchManageShelfTab('pantry')" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">🗄️ Scaffali Dispensa</button>
       </div>
       <form onsubmit="handleAddShelf(event)" class="flex gap-2">
-        <input type="text" id="new-shelf-name" placeholder="Nome ripiano/scaffale..." required class="flex-1 p-2 rounded-xl border text-sm dark:bg-gray-700 outline-none">
+        <input type="text" id="new-shelf-name" placeholder="Nome ripiano/scaffale/cassetto..." required class="flex-1 p-2 rounded-xl border text-sm dark:bg-gray-700 outline-none">
         <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm">Aggiungi</button>
       </form>
       <div id="shelves-manage-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
@@ -583,12 +573,12 @@
 
       <div id="receipt-step-upload" class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Incolla qui il testo dello scontrino o carica il PDF/File</label>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Incolla qui il testo dello scontrino</label>
           <textarea id="receipt-text-input" rows="6" placeholder="Incolla il testo del tuo scontrino... (es. PANINI INTEGRALI 0,41 D, SEITAN NATURALE 4,23 B)" class="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-xs font-mono outline-none"></textarea>
         </div>
         <div class="flex items-center gap-3">
           <label class="flex-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 py-2.5 px-4 rounded-xl text-xs font-bold text-center cursor-pointer hover:bg-emerald-100 transition">
-            📁 Carica un File Scontrino (PDF/TXT)
+            📁 Carica un File Scontrino
             <input type="file" id="receipt-file-input" accept=".txt,.pdf,.png,.jpg" onchange="handleReceiptFileUpload(event)" class="hidden">
           </label>
           <button onclick="processReceiptText()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition flex items-center gap-1.5">
@@ -599,7 +589,6 @@
       </div>
 
       <div id="receipt-step-process" class="hidden space-y-6">
-
         <div id="receipt-part1-container" class="hidden bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-4 rounded-2xl space-y-3">
           <div class="flex items-center justify-between border-b border-amber-200/60 pb-2">
             <span class="text-xs font-bold uppercase text-amber-800 dark:text-amber-400 flex items-center gap-1">
@@ -616,16 +605,16 @@
 
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Ripiano Predefinito</label>
-                <select id="part1-shelf-select" class="w-full p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs outline-none"></select>
-              </div>
-              <div>
                 <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Destinazione</label>
-                <select id="part1-location-select" class="w-full p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs outline-none">
+                <select id="part1-location-select" onchange="updatePart1ShelfVisibility()" class="w-full p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs outline-none">
                   <option value="fridge">🥗 Frigo</option>
                   <option value="pantry">🗄️ Dispensa</option>
                   <option value="freezer">❄️ Freezer</option>
                 </select>
+              </div>
+              <div id="part1-shelf-wrapper">
+                <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Ripiano / Scaffale</label>
+                <select id="part1-shelf-select" class="w-full p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs outline-none"></select>
               </div>
             </div>
 
@@ -637,9 +626,6 @@
             </div>
 
             <div class="flex gap-2 pt-1">
-              <button onclick="skipCurrentNewItem()" class="px-4 py-2.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-200 font-bold rounded-xl text-xs transition">
-                🚫 Salta / Ignora
-              </button>
               <button onclick="saveAndNextNewItem()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm">
                 Salva e Passa al Successivo
               </button>
@@ -657,7 +643,7 @@
 
           <button id="btn-add-mass" onclick="addAllMassRecognizedItems()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md transition flex items-center justify-center gap-2">
             <i data-lucide="check-check" class="w-4 h-4"></i>
-            <span>AGGIUNGI TUTTI IN MASSA IN DISPENSA/FRIGO</span>
+            <span>AGGIUNGI TUTTI IN MASSA ALL'INVENTARIO</span>
           </button>
         </div>
 
@@ -681,17 +667,15 @@
     let shoppingData = {}; 
     let masterDbData = {};
     
-    let fridgeShelvesData = {};
     let freezerShelvesData = {};
     let pantryShelvesData = {}; 
     
     let categoriesData = {};
     let recipesData = {};
 
-    let selectedFridgeShelf = 'all';
     let selectedFreezerShelf = 'all';
     let selectedPantryShelf = 'all';
-    let activeManageShelfTab = 'fridge';
+    let activeManageShelfTab = 'freezer';
     let fridgeSearchQuery = '';
     let freezerSearchQuery = '';
     let pantrySearchQuery = '';
@@ -701,7 +685,7 @@
     let isIngredientStateInitialized = false;
     let isVeganOnlyFilter = false;
 
-    // VARIABILI PARSER SCONTRINO
+    // PARSER SCONTRINO
     let unmappedReceiptItems = [];
     let mappedReceiptItems = [];
     let currentUnmappedIndex = 0;
@@ -711,6 +695,17 @@
       '🥛', '🧀', '🥓', '🥗', '🥦', '🥕', '🥫', '🍲', '🧃', '🥚', 
       '🍗', '🥩', '🐟', '🍎', '🍇', '🍞', '🧈', '🍾', '🍮', '🥑', 
       '🍋', '🫐', '🍟', '🥟', '📦', '🍦', '🧊', '🏷️', '🍪', '🍯'
+    ];
+
+    // CATALOGO RICETTE PREDEFINITE PER AI SVUOTA-TUTTO
+    const builtinAIRecipes = [
+      { id: 'ai1', title: 'Hummus Tradizionale di Ceci', ingredients: ['Ceci', 'Limone', 'Olio', 'Aglio', 'Tahina'], isVegan: true, link: '' },
+      { id: 'ai2', title: 'Pasta Integrale al Sugo di Pomodoro e Basilico', ingredients: ['Pasta integrale', 'Passata di pomodoro', 'Olio', 'Aglio', 'Basilico'], isVegan: true, link: '' },
+      { id: 'ai3', title: 'Bowl di Tofu Saltato con Verdure', ingredients: ['Tofu', 'Salsa di soia', 'Zucchine', 'Carote', 'Olio di sesamo'], isVegan: true, link: '' },
+      { id: 'ai4', title: 'Padellata di Seitan con Peperoni', ingredients: ['Seitan', 'Peperoni', 'Cipolla', 'Olio', 'Salsa di soia'], isVegan: true, link: '' },
+      { id: 'ai5', title: 'Insalata Ricca di Lupini ed Avocado', ingredients: ['Lupini', 'Avocado', 'Pomodorini', 'Olio', 'Limone'], isVegan: true, link: '' },
+      { id: 'ai6', title: 'Vellutata di Zucca e Carote allo Zenzero', ingredients: ['Zucca', 'Carote', 'Cipolla', 'Olio', 'Zenzero'], isVegan: true, link: '' },
+      { id: 'ai7', title: 'Burger Vegetale con Mopur e Insalata', ingredients: ['Mopur', 'Panini', 'Insalata', 'Pomodoro'], isVegan: true, link: '' }
     ];
 
     const connectedRef = db.ref(".info/connected");
@@ -735,13 +730,6 @@
       db.ref("shopping_items").on("value", (snapshot) => { shoppingData = snapshot.val() || {}; renderAll(); }); 
       db.ref("master_db").on("value", (snapshot) => { masterDbData = snapshot.val() || {}; });
 
-      db.ref("fridge_shelves").on("value", (snapshot) => {
-        const val = snapshot.val();
-        if (!val) {
-          db.ref("fridge_shelves").set({ s1: { name: 'Ripiano Superiore' }, s2: { name: 'Ripiano Centrale' }, s3: { name: 'Ripiano Inferiore' }, s4: { name: 'Cassetto Verdure' }, s5: { name: 'Sportello' } });
-        } else { fridgeShelvesData = val; renderAll(); }
-      });
-
       db.ref("freezer_shelves").on("value", (snapshot) => {
         const val = snapshot.val();
         if (!val) {
@@ -760,14 +748,20 @@
         const val = snapshot.val();
         if (!val) {
           db.ref("fridge_categories").set({
-            c1: { name: 'Formaggi e Latticini', icon: '🥛' }, c2: { name: 'Salumi e Affettati', icon: '🥓' },
-            c3: { name: 'Frutta e Verdura', icon: '🥗' }, c4: { name: 'Carne e Pesce', icon: '🥩' },
-            c5: { name: 'Surgelati e Gelati', icon: '🍦' }, c6: { name: 'Scatolame e Secco', icon: '🥫' }
+            c1: { name: 'Verdura e Frutta', icon: '🥗' }, 
+            c2: { name: 'Proteine Vegetali & Tofu', icon: '🌱' },
+            c3: { name: 'Formaggi e Alternative', icon: '🧀' }, 
+            c4: { name: 'Scatolame e Secco', icon: '🥫' },
+            c5: { name: 'Surgelati', icon: '❄️' }, 
+            c6: { name: 'Altro', icon: '📦' }
           });
         } else { categoriesData = val; renderAll(); }
       });
 
-      db.ref("fridge_recipes").on("value", (snapshot) => { recipesData = snapshot.val() || {}; renderAll(); });
+      db.ref("fridge_recipes").on("value", (snapshot) => { 
+        recipesData = snapshot.val() || {}; 
+        renderRecipes(); 
+      });
     });
 
     function setupDefaultDates() {
@@ -802,16 +796,15 @@
 
     function goToAddWithContext(loc) {
       let shelfToPreselect = 'all';
-      if (loc === 'fridge') shelfToPreselect = selectedFridgeShelf;
-      else if (loc === 'freezer') shelfToPreselect = selectedFreezerShelf;
+      if (loc === 'freezer') shelfToPreselect = selectedFreezerShelf;
       else if (loc === 'pantry') shelfToPreselect = selectedPantryShelf;
 
       document.querySelector(`input[name="add-location"][value="${loc}"]`).checked = true;
       updateAddShelfDropdown();
 
-      if (shelfToPreselect !== 'all') {
+      if (shelfToPreselect !== 'all' && loc !== 'fridge') {
         const select = document.getElementById('add-shelf');
-        if (select.querySelector(`option[value="${shelfToPreselect}"]`)) {
+        if (select && select.querySelector(`option[value="${shelfToPreselect}"]`)) {
           select.value = shelfToPreselect;
         }
       }
@@ -830,27 +823,27 @@
       let resultsHTML = '';
       let matchCount = 0;
 
-      const searchInLocation = (dataObj, shelvesObj, locName, locColorClass) => {
+      const searchInLocation = (dataObj, shelvesObj, locName, locColorClass, hasShelves) => {
         Object.entries(dataObj).forEach(([id, item]) => {
           if (item.name && item.name.toLowerCase().includes(query)) {
             matchCount++;
-            const shelfName = shelvesObj[item.shelf]?.name || 'Generale';
+            const shelfName = hasShelves ? (shelvesObj[item.shelf]?.name || 'Generale') : 'Unico';
             resultsHTML += `
               <div class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                 <div class="flex items-center gap-2">
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${locColorClass}">${locName}</span>
                   <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">${item.name}</span>
                 </div>
-                <div class="text-[11px] text-gray-400">📍 ${shelfName} • Qtà: ${item.qty || 1}</div>
+                <div class="text-[11px] text-gray-400">${hasShelves ? `📍 ${shelfName} • ` : ''}Qtà: ${item.qty || 1}</div>
               </div>
             `;
           }
         });
       };
 
-      searchInLocation(fridgeData, fridgeShelvesData, '🥗 Frigo', 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300');
-      searchInLocation(freezerData, freezerShelvesData, '❄️ Freezer', 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300');
-      searchInLocation(pantryData, pantryShelvesData, '🗄️ Dispensa', 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300');
+      searchInLocation(fridgeData, {}, '🥗 Frigo', 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300', false);
+      searchInLocation(freezerData, freezerShelvesData, '❄️ Freezer', 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300', true);
+      searchInLocation(pantryData, pantryShelvesData, '🗄️ Dispensa', 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300', true);
 
       if (matchCount === 0) {
         resultsHTML = `<div class="text-xs text-gray-500 p-2 text-center">Nessun ingrediente trovato.</div>`;
@@ -965,7 +958,7 @@
           alert("✅ Lista copiata negli appunti!");
         }
       } catch (err) {
-        console.log("Condivisione annullata o non riuscita", err);
+        console.log("Condivisione annullata", err);
       }
     }
 
@@ -1013,7 +1006,7 @@
 
     function isSameOriginalFood(a, b) {
       return getBaseFoodName(a.name).toLowerCase() === getBaseFoodName(b.name).toLowerCase() &&
-        (a.expiryDate || '') === (b.expiryDate || '') && (a.shelf || '') === (b.shelf || '') && (a.category || '') === (b.category || '');
+        (a.expiryDate || '') === (b.expiryDate || '') && (a.category || '') === (b.category || '');
     }
 
     function openItemPiece(id, loc) {
@@ -1060,22 +1053,24 @@
       }
     }
 
-    function renderGenericList(listContainerId, filterBarId, locData, locShelves, selectedShelf, sortSelectId, searchQuery, locCode, colorClass) {
-      const filterBar = document.getElementById(filterBarId);
+    // LISTA GENERICA CON OPZIONE PER MOSTRARE/NASCONDERE RIPIANI
+    function renderGenericList(listContainerId, filterBarId, locData, locShelves, selectedShelf, sortSelectId, searchQuery, locCode, colorClass, hasShelves) {
+      const filterBar = filterBarId ? document.getElementById(filterBarId) : null;
       const listContainer = document.getElementById(listContainerId);
       const sortSelect = document.getElementById(sortSelectId);
-      if(!filterBar || !listContainer) return;
+      if (!listContainer) return;
 
-      filterBar.innerHTML = `<button onclick="filterShelf('${locCode}', 'all')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedShelf === 'all' ? `bg-${colorClass}-600 text-white` : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">Tutti i ripiani</button>`;
-      
-      Object.entries(locShelves).forEach(([id, s]) => {
-        filterBar.innerHTML += `<button onclick="filterShelf('${locCode}', '${id}')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedShelf === id ? `bg-${colorClass}-600 text-white` : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">${s.name}</button>`;
-      });
+      if (hasShelves && filterBar) {
+        filterBar.innerHTML = `<button onclick="filterShelf('${locCode}', 'all')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedShelf === 'all' ? `bg-${colorClass}-600 text-white` : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">Tutti i ripiani</button>`;
+        Object.entries(locShelves).forEach(([id, s]) => {
+          filterBar.innerHTML += `<button onclick="filterShelf('${locCode}', '${id}')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedShelf === id ? `bg-${colorClass}-600 text-white` : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">${s.name}</button>`;
+        });
+      }
 
       listContainer.innerHTML = '';
       let items = Object.entries(locData).map(([id, item]) => ({ id, ...item }));
 
-      if (selectedShelf !== 'all') items = items.filter(i => i.shelf === selectedShelf);
+      if (hasShelves && selectedShelf !== 'all') items = items.filter(i => i.shelf === selectedShelf);
       if (searchQuery) items = items.filter(i => i.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const sortBy = sortSelect ? sortSelect.value : 'expiry';
@@ -1098,7 +1093,7 @@
           return (categoriesData[a.category]?.name || '').localeCompare(categoriesData[b.category]?.name || '');
         } else if (sortBy === 'alpha') {
           return (a.name || '').localeCompare(b.name || '');
-        } else if (sortBy === 'shelf') {
+        } else if (sortBy === 'shelf' && hasShelves) {
           return (locShelves[a.shelf]?.name || '').localeCompare(locShelves[b.shelf]?.name || '');
         }
         return 0;
@@ -1111,7 +1106,7 @@
 
       items.forEach(item => {
         const cat = categoriesData[item.category] || { name: 'Altro', icon: '📦' };
-        const shelf = locShelves[item.shelf] || { name: 'Generale' };
+        const shelfName = hasShelves ? (locShelves[item.shelf]?.name || 'Generale') : null;
         const cardBgClass = item.isOpenPiece ? 'bg-amber-50/90 dark:bg-amber-950/30 border-amber-300' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700';
         
         listContainer.innerHTML += `
@@ -1126,34 +1121,33 @@
                   ${item.isOpenPiece ? `<span class="bg-amber-200 text-amber-800 text-[9px] px-1.5 py-0.5 rounded-full font-bold">APERTO</span>` : ''}
                 </h4>
                 <div class="text-[11px] text-gray-400 flex items-center gap-2">
-                  <span>📍 ${shelf.name}</span> • <span>Qtà: ${item.qty || 1}</span>
+                  ${hasShelves ? `<span>📍 ${shelfName}</span> • ` : ''}<span>Qtà: ${item.qty || 1}</span>
                 </div>
                 ${item.expiryDate ? `<span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Scade: ${item.expiryDate}</span>` : ''}
               </div>
             </div>
             <div class="flex items-center gap-1 flex-shrink-0">
-              <button onclick="addToShoppingList('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-indigo-500" title="Aggiungi alla Spesa senza eliminare"><i data-lucide="shopping-cart" class="w-4 h-4"></i></button>
+              <button onclick="addToShoppingList('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-indigo-500" title="Aggiungi alla Spesa"><i data-lucide="shopping-cart" class="w-4 h-4"></i></button>
               ${item.isOpenPiece 
                 ? `<button onclick="closeItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Richiudi"><i data-lucide="package" class="w-4 h-4"></i></button>`
                 : `<button onclick="openItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-amber-600" title="Segna Aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>`
               }
-              <button onclick="duplicateFoodItem('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600"><i data-lucide="copy" class="w-4 h-4"></i></button>
-              <button onclick="openEditModal('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-              <button onclick="deleteFoodItem('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-red-500" title="Elimina e aggiungi alla spesa"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              <button onclick="duplicateFoodItem('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Duplica"><i data-lucide="copy" class="w-4 h-4"></i></button>
+              <button onclick="openEditModal('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Modifica"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+              <button onclick="deleteFoodItem('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-red-500" title="Elimina"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
           </div>
         `;
       });
     }
 
-    function renderFridgeList() { renderGenericList('fridge-food-list', 'fridge-shelves-filter-bar', fridgeData, fridgeShelvesData, selectedFridgeShelf, 'fridge-sort-select', fridgeSearchQuery, 'fridge', 'emerald'); }
-    function renderFreezerList() { renderGenericList('freezer-food-list', 'freezer-shelves-filter-bar', freezerData, freezerShelvesData, selectedFreezerShelf, 'freezer-sort-select', freezerSearchQuery, 'freezer', 'cyan'); }
-    function renderPantryList() { renderGenericList('pantry-food-list', 'pantry-shelves-filter-bar', pantryData, pantryShelvesData, selectedPantryShelf, 'pantry-sort-select', pantrySearchQuery, 'pantry', 'indigo'); }
+    function renderFridgeList() { renderGenericList('fridge-food-list', null, fridgeData, {}, 'all', 'fridge-sort-select', fridgeSearchQuery, 'fridge', 'emerald', false); }
+    function renderFreezerList() { renderGenericList('freezer-food-list', 'freezer-shelves-filter-bar', freezerData, freezerShelvesData, selectedFreezerShelf, 'freezer-sort-select', freezerSearchQuery, 'freezer', 'cyan', true); }
+    function renderPantryList() { renderGenericList('pantry-food-list', 'pantry-shelves-filter-bar', pantryData, pantryShelvesData, selectedPantryShelf, 'pantry-sort-select', pantrySearchQuery, 'pantry', 'indigo', true); }
 
     function filterShelf(type, shelfId) {
-      if (type === 'fridge') selectedFridgeShelf = shelfId;
-      else if (type === 'freezer') selectedFreezerShelf = shelfId;
-      else selectedPantryShelf = shelfId;
+      if (type === 'freezer') selectedFreezerShelf = shelfId;
+      else if (type === 'pantry') selectedPantryShelf = shelfId;
       renderAll();
     }
 
@@ -1166,23 +1160,29 @@
 
     function renderAddDropdowns() {
       const loc = document.querySelector('input[name="add-location"]:checked')?.value || 'fridge';
+      const shelfContainer = document.getElementById('add-shelf-container');
       const shelfSelect = document.getElementById('add-shelf');
       const catSelect = document.getElementById('add-category');
       if (!shelfSelect || !catSelect) return;
 
-      const currentShelf = shelfSelect.value;
+      if (loc === 'fridge') {
+        shelfContainer.classList.add('hidden');
+        shelfSelect.removeAttribute('required');
+      } else {
+        shelfContainer.classList.remove('hidden');
+        shelfSelect.setAttribute('required', 'required');
+        
+        const currentShelf = shelfSelect.value;
+        shelfSelect.innerHTML = '';
+        let shelves = loc === 'freezer' ? freezerShelvesData : pantryShelvesData;
+
+        Object.entries(shelves).forEach(([id, s]) => {
+          shelfSelect.innerHTML += `<option value="${id}">${s.name}</option>`;
+        });
+        if (currentShelf && shelves[currentShelf]) shelfSelect.value = currentShelf;
+      }
+
       const currentCat = catSelect.value;
-
-      shelfSelect.innerHTML = '';
-      let shelves = fridgeShelvesData;
-      if (loc === 'freezer') shelves = freezerShelvesData;
-      if (loc === 'pantry') shelves = pantryShelvesData;
-
-      Object.entries(shelves).forEach(([id, s]) => {
-        shelfSelect.innerHTML += `<option value="${id}">${s.name}</option>`;
-      });
-      if (currentShelf && shelves[currentShelf]) shelfSelect.value = currentShelf;
-
       catSelect.innerHTML = '';
       Object.entries(categoriesData).forEach(([id, c]) => {
         catSelect.innerHTML += `<option value="${id}">${c.name}</option>`;
@@ -1196,7 +1196,7 @@
       e.preventDefault();
       const loc = document.querySelector('input[name="add-location"]:checked').value;
       const name = document.getElementById('add-name').value;
-      const shelf = document.getElementById('add-shelf').value;
+      const shelf = loc === 'fridge' ? '' : document.getElementById('add-shelf').value;
       const category = document.getElementById('add-category').value;
       const qty = document.getElementById('add-qty').value;
       const entryDate = document.getElementById('add-entry-date').value;
@@ -1232,13 +1232,20 @@
       document.getElementById('edit-expiry-date').value = item.expiryDate || '';
       document.getElementById('edit-notes').value = item.notes || '';
 
+      const shelfGroup = document.getElementById('edit-shelf-group');
       const shelfSelect = document.getElementById('edit-shelf');
-      shelfSelect.innerHTML = '';
-      const shelves = loc === 'fridge' ? fridgeShelvesData : (loc === 'freezer' ? freezerShelvesData : pantryShelvesData);
-      Object.entries(shelves).forEach(([sId, s]) => {
-        shelfSelect.innerHTML += `<option value="${sId}">${s.name}</option>`;
-      });
-      shelfSelect.value = item.shelf;
+
+      if (loc === 'fridge') {
+        shelfGroup.classList.add('hidden');
+      } else {
+        shelfGroup.classList.remove('hidden');
+        shelfSelect.innerHTML = '';
+        const shelves = loc === 'freezer' ? freezerShelvesData : pantryShelvesData;
+        Object.entries(shelves).forEach(([sId, s]) => {
+          shelfSelect.innerHTML += `<option value="${sId}">${s.name}</option>`;
+        });
+        shelfSelect.value = item.shelf || '';
+      }
 
       const catSelect = document.getElementById('edit-category');
       catSelect.innerHTML = '';
@@ -1248,6 +1255,7 @@
       catSelect.value = item.category;
 
       document.getElementById('modal-edit-food').classList.remove('hidden');
+      lucide.createIcons();
     }
 
     function handleSaveEditFood(e) {
@@ -1256,19 +1264,32 @@
       const loc = document.getElementById('edit-location').value;
       const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
       
-      db.ref(`${path}/${id}`).update({
+      const payload = {
         name: document.getElementById('edit-name').value,
-        shelf: document.getElementById('edit-shelf').value,
         category: document.getElementById('edit-category').value,
         qty: parseInt(document.getElementById('edit-qty').value),
         expiryDate: document.getElementById('edit-expiry-date').value,
         notes: document.getElementById('edit-notes').value
-      }, () => {
+      };
+
+      if (loc !== 'fridge') {
+        payload.shelf = document.getElementById('edit-shelf').value;
+      }
+
+      db.ref(`${path}/${id}`).update(payload, () => {
         closeModal('modal-edit-food');
       });
     }
 
-    function toggleAddRecipeForm() { document.getElementById('add-recipe-form-card').classList.toggle('hidden'); }
+    // =========================================================
+    // GESTIONE COMPLETA RICETTE & SVUOTA TUTTO
+    // =========================================================
+
+    function toggleAddRecipeForm() { 
+      document.getElementById('add-recipe-form-card').classList.toggle('hidden'); 
+      lucide.createIcons();
+    }
+
     function toggleVeganOnlyFilter() {
       isVeganOnlyFilter = !isVeganOnlyFilter;
       const btn = document.getElementById('btn-vegan-toggle');
@@ -1280,10 +1301,82 @@
     
     function getAvailableFoodItemsList() {
       const list = new Set();
-      Object.values(fridgeData).forEach(i => i.name && list.add(i.name.trim()));
-      Object.values(freezerData).forEach(i => i.name && list.add(i.name.trim()));
-      Object.values(pantryData).forEach(i => i.name && list.add(i.name.trim()));
+      Object.values(fridgeData).forEach(i => i.name && list.add(getBaseFoodName(i.name)));
+      Object.values(freezerData).forEach(i => i.name && list.add(getBaseFoodName(i.name)));
+      Object.values(pantryData).forEach(i => i.name && list.add(getBaseFoodName(i.name)));
       return Array.from(list).sort();
+    }
+
+    function handleSaveRecipe(e) {
+      e.preventDefault();
+      const title = document.getElementById('recipe-title-input').value.trim();
+      const ingredientsRaw = document.getElementById('recipe-ingredients-input').value;
+      const link = document.getElementById('recipe-link-input').value.trim();
+      const isVegan = document.getElementById('recipe-is-vegan-input').checked;
+
+      const ingredients = ingredientsRaw.split(',').map(i => i.trim()).filter(i => i.length > 0);
+
+      if (!title || ingredients.length === 0) return;
+
+      db.ref("fridge_recipes").push({ title, ingredients, link, isVegan }, (err) => {
+        if (!err) {
+          document.getElementById('recipe-title-input').value = '';
+          document.getElementById('recipe-ingredients-input').value = '';
+          document.getElementById('recipe-link-input').value = '';
+          document.getElementById('recipe-is-vegan-input').checked = false;
+          toggleAddRecipeForm();
+        }
+      });
+    }
+
+    function deleteRecipe(id) {
+      if (confirm("Eliminare questa ricetta?")) {
+        db.ref(`fridge_recipes/${id}`).remove();
+      }
+    }
+
+    function openEditRecipeModal(id) {
+      const rec = recipesData[id];
+      if (!rec) return;
+      document.getElementById('edit-recipe-id').value = id;
+      document.getElementById('edit-recipe-title').value = rec.title;
+      document.getElementById('edit-recipe-ingredients').value = Array.isArray(rec.ingredients) ? rec.ingredients.join(', ') : rec.ingredients;
+      document.getElementById('edit-recipe-link').value = rec.link || '';
+      document.getElementById('edit-recipe-is-vegan').checked = !!rec.isVegan;
+      document.getElementById('modal-edit-recipe').classList.remove('hidden');
+    }
+
+    function handleSaveEditRecipe(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-recipe-id').value;
+      const title = document.getElementById('edit-recipe-title').value.trim();
+      const ingredientsRaw = document.getElementById('edit-recipe-ingredients').value;
+      const link = document.getElementById('edit-recipe-link').value.trim();
+      const isVegan = document.getElementById('edit-recipe-is-vegan').checked;
+      const ingredients = ingredientsRaw.split(',').map(i => i.trim()).filter(i => i.length > 0);
+
+      db.ref(`fridge_recipes/${id}`).update({ title, ingredients, link, isVegan }, () => {
+        closeModal('modal-edit-recipe');
+      });
+    }
+
+    function toggleIngredientSelection(item) {
+      if (selectedAvailableIngredients.has(item)) {
+        selectedAvailableIngredients.delete(item);
+      } else {
+        selectedAvailableIngredients.add(item);
+      }
+      renderRecipes();
+    }
+
+    function selectAllIngredients(select) {
+      const availableItems = getAvailableFoodItemsList();
+      if (select) {
+        selectedAvailableIngredients = new Set(availableItems);
+      } else {
+        selectedAvailableIngredients.clear();
+      }
+      renderRecipes();
     }
 
     function renderRecipes() {
@@ -1292,20 +1385,129 @@
         selectedAvailableIngredients = new Set(availableItems);
         isIngredientStateInitialized = true;
       }
+
+      // 1. Render Selettore Ingredienti Disponibili
+      const selectorContainer = document.getElementById('recipe-ingredients-selector');
+      if (selectorContainer) {
+        if (availableItems.length === 0) {
+          selectorContainer.innerHTML = `<span class="text-xs text-gray-400">Nessun ingrediente in archivio.</span>`;
+        } else {
+          selectorContainer.innerHTML = availableItems.map(item => {
+            const isSelected = selectedAvailableIngredients.has(item);
+            return `
+              <button onclick="toggleIngredientSelection('${item.replace(/'/g, "\\'")}')" 
+                class="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${isSelected ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-800 dark:border-gray-700'}">
+                ${isSelected ? '✓ ' : ''}${item}
+              </button>
+            `;
+          }).join('');
+        }
+      }
+
+      const searchQuery = (document.getElementById('recipe-search-input')?.value || '').toLowerCase().trim();
+
+      // Funzione di match ricetta
+      const matchesRecipe = (rec) => {
+        if (isVeganOnlyFilter && !rec.isVegan) return false;
+        
+        const ingredientsList = Array.isArray(rec.ingredients) ? rec.ingredients : (rec.ingredients ? rec.ingredients.split(',') : []);
+        
+        if (searchQuery) {
+          const titleMatch = rec.title.toLowerCase().includes(searchQuery);
+          const ingMatch = ingredientsList.some(i => i.toLowerCase().includes(searchQuery));
+          if (!titleMatch && !ingMatch) return false;
+        }
+
+        return true;
+      };
+
+      // 2. Render Ricette Personali
+      const myRecipesContainer = document.getElementById('my-recipes-container');
+      const myRecipesList = Object.entries(recipesData).map(([id, r]) => ({ id, ...r })).filter(matchesRecipe);
+
+      if (myRecipesContainer) {
+        if (myRecipesList.length === 0) {
+          myRecipesContainer.innerHTML = `<div class="text-xs text-gray-400 p-2">Nessuna ricetta personale corrispondente. Aggiungine una cliccando su "Nuova Ricetta"!</div>`;
+        } else {
+          myRecipesContainer.innerHTML = myRecipesList.map(rec => renderRecipeCard(rec, true)).join('');
+        }
+      }
+
+      // 3. Render Ricette AI
+      const aiContainer = document.getElementById('ai-recipes-container');
+      const aiList = builtinAIRecipes.filter(matchesRecipe);
+
+      if (aiContainer) {
+        if (aiList.length === 0) {
+          aiContainer.innerHTML = `<div class="text-xs text-gray-400 p-2">Nessuna proposta AI trovata con i filtri attivi.</div>`;
+        } else {
+          aiContainer.innerHTML = aiList.map(rec => renderRecipeCard(rec, false)).join('');
+        }
+      }
+
       lucide.createIcons();
     }
-    
+
+    function renderRecipeCard(rec, isCustom) {
+      const ingList = Array.isArray(rec.ingredients) ? rec.ingredients : (rec.ingredients ? rec.ingredients.split(',') : []);
+      
+      // Calcola quanti ingredienti sono disponibili in casa
+      let matchedCount = 0;
+      ingList.forEach(ing => {
+        const cleaned = ing.trim().toLowerCase();
+        for (let sel of selectedAvailableIngredients) {
+          if (sel.toLowerCase().includes(cleaned) || cleaned.includes(sel.toLowerCase())) {
+            matchedCount++;
+            break;
+          }
+        }
+      });
+
+      const matchRatio = ingList.length > 0 ? (matchedCount / ingList.length) : 0;
+      const isComplete = matchRatio === 1;
+
+      return `
+        <div class="p-3.5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between space-y-2">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <h4 class="font-bold text-sm text-gray-800 dark:text-gray-100">${rec.title}</h4>
+                ${rec.isVegan ? `<span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 px-1.5 py-0.5 rounded-md">🌱 VEGAN</span>` : ''}
+              </div>
+              <p class="text-xs text-gray-500 mt-1"><strong>Ingredienti:</strong> ${ingList.join(', ')}</p>
+            </div>
+            ${isCustom ? `
+              <div class="flex items-center gap-1">
+                <button onclick="openEditRecipeModal('${rec.id}')" class="p-1.5 text-gray-400 hover:text-amber-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                <button onclick="deleteRecipe('${rec.id}')" class="p-1.5 text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700 text-xs">
+            <span class="font-bold ${isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}">
+              ${isComplete ? '✨ Hai tutti gli ingredienti!' : `Disponibili: ${matchedCount}/${ingList.length}`}
+            </span>
+            ${rec.link ? `
+              <a href="${rec.link}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold">
+                Vedi Ricetta <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              </a>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // GESTIONE RIPIANI
     function openShelvesModal() { document.getElementById('modal-shelves').classList.remove('hidden'); renderShelvesManageList(); }
     
     function switchManageShelfTab(tab) {
       activeManageShelfTab = tab;
-      const fBtn = document.getElementById('manage-shelf-tab-fridge');
       const fzBtn = document.getElementById('manage-shelf-tab-freezer');
       const pBtn = document.getElementById('manage-shelf-tab-pantry');
       
-      fBtn.className = tab === 'fridge' ? "px-2 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 whitespace-nowrap" : "px-2 py-1.5 rounded-lg bg-gray-100 text-gray-600 whitespace-nowrap";
-      fzBtn.className = tab === 'freezer' ? "px-2 py-1.5 rounded-lg bg-cyan-100 text-cyan-800 whitespace-nowrap" : "px-2 py-1.5 rounded-lg bg-gray-100 text-gray-600 whitespace-nowrap";
-      pBtn.className = tab === 'pantry' ? "px-2 py-1.5 rounded-lg bg-indigo-100 text-indigo-800 whitespace-nowrap" : "px-2 py-1.5 rounded-lg bg-gray-100 text-gray-600 whitespace-nowrap";
+      fzBtn.className = tab === 'freezer' ? "px-3 py-1.5 rounded-lg bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300 whitespace-nowrap" : "px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap";
+      pBtn.className = tab === 'pantry' ? "px-3 py-1.5 rounded-lg bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300 whitespace-nowrap" : "px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap";
       renderShelvesManageList();
     }
 
@@ -1313,13 +1515,13 @@
       const container = document.getElementById('shelves-manage-list');
       if (!container) return;
       container.innerHTML = '';
-      const shelves = activeManageShelfTab === 'fridge' ? fridgeShelvesData : (activeManageShelfTab === 'freezer' ? freezerShelvesData : pantryShelvesData);
-      const path = activeManageShelfTab === 'fridge' ? 'fridge_shelves' : (activeManageShelfTab === 'freezer' ? 'freezer_shelves' : 'pantry_shelves');
+      const shelves = activeManageShelfTab === 'freezer' ? freezerShelvesData : pantryShelvesData;
+      const path = activeManageShelfTab === 'freezer' ? 'freezer_shelves' : 'pantry_shelves';
 
       Object.entries(shelves).forEach(([id, s]) => {
         container.innerHTML += `
           <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-100 dark:border-gray-600 text-sm gap-2">
-            <input type="text" value="${s.name.replace(/"/g, '&quot;')}" onchange="updateShelfName('${path}', '${id}', this.value)" class="bg-transparent font-medium outline-none flex-1 focus:bg-white rounded px-1.5 py-0.5">
+            <input type="text" value="${s.name.replace(/"/g, '&quot;')}" onchange="updateShelfName('${path}', '${id}', this.value)" class="bg-transparent font-medium outline-none flex-1 focus:bg-white dark:focus:bg-gray-800 rounded px-1.5 py-0.5">
             <button onclick="deleteShelf('${path}', '${id}')" class="text-gray-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         `;
@@ -1331,11 +1533,12 @@
     function handleAddShelf(e) {
       e.preventDefault();
       const name = document.getElementById('new-shelf-name').value;
-      const path = activeManageShelfTab === 'fridge' ? 'fridge_shelves' : (activeManageShelfTab === 'freezer' ? 'freezer_shelves' : 'pantry_shelves');
+      const path = activeManageShelfTab === 'freezer' ? 'freezer_shelves' : 'pantry_shelves';
       if (name) db.ref(path).push({ name }, () => { document.getElementById('new-shelf-name').value = ''; });
     }
-    function deleteShelf(path, id) { if (confirm("Eliminare questo ripiano?")) db.ref(`${path}/${id}`).remove(); }
+    function deleteShelf(path, id) { if (confirm("Eliminare questa posizione?")) db.ref(`${path}/${id}`).remove(); }
 
+    // CATEGORIE & UTILS
     function openCategoriesModal() { document.getElementById('modal-categories').classList.remove('hidden'); renderCategoriesManageList(); }
     function renderCategoriesManageList() {
       const container = document.getElementById('categories-manage-list');
@@ -1345,7 +1548,7 @@
           <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-100 dark:border-gray-600 text-sm gap-2">
             <div class="flex items-center gap-2 flex-1">
               <span class="w-6 h-6 flex items-center justify-center flex-shrink-0">${getCategoryIconHtml(c)}</span>
-              <input type="text" value="${c.name.replace(/"/g, '&quot;')}" onchange="updateCategoryName('${id}', this.value)" class="bg-transparent font-medium w-full outline-none focus:bg-white rounded px-1.5 py-0.5">
+              <input type="text" value="${c.name.replace(/"/g, '&quot;')}" onchange="updateCategoryName('${id}', this.value)" class="bg-transparent font-medium w-full outline-none focus:bg-white dark:focus:bg-gray-800 rounded px-1.5 py-0.5">
             </div>
             <button onclick="deleteCategory('${id}')" class="text-gray-400 hover:text-red-500 p-1 flex-shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
@@ -1381,7 +1584,7 @@
     }
 
     // =========================================================
-    // LOGICA DI IMPORTAZIONE SCONTRINI E GESTIONE MASTER DB (PARTE I & PARTE II)
+    // IMPORTAZIONE SCONTRINI
     // =========================================================
 
     function openReceiptModal() {
@@ -1391,50 +1594,16 @@
       document.getElementById('modal-receipt').classList.remove('hidden');
     }
 
-    async function handleReceiptFileUpload(e) {
+    function handleReceiptFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
-
-      if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
-        try {
-          const arrayBuffer = await file.arrayBuffer();
-          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          let extractedLines = [];
-
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            
-            // Raggruppa i frammenti per coordinata Y (stessa riga)
-            let linesMap = {};
-            textContent.items.forEach(item => {
-              const y = Math.round(item.transform[5]);
-              if (!linesMap[y]) linesMap[y] = [];
-              linesMap[y].push(item.str);
-            });
-
-            // Ordina le righe dall'alto verso il basso
-            const sortedYs = Object.keys(linesMap).map(Number).sort((a, b) => b - a);
-            sortedYs.forEach(y => {
-              const lineText = linesMap[y].join(" ").trim();
-              if (lineText) extractedLines.push(lineText);
-            });
-          }
-
-          document.getElementById('receipt-text-input').value = extractedLines.join("\n");
-        } catch (err) {
-          alert("Impossibile estrarre il testo dal PDF. Prova ad incollarlo manualmente.");
-        }
-      } else {
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-          document.getElementById('receipt-text-input').value = evt.target.result;
-        };
-        reader.readAsText(file);
-      }
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        document.getElementById('receipt-text-input').value = evt.target.result;
+      };
+      reader.readAsText(file);
     }
 
-    // SIMILARITÀ LEVENSHTEIN PER DUPLICATI
     function calcolaSimilarita(a, b) {
       const s1 = (a || '').toLowerCase().trim();
       const s2 = (b || '').toLowerCase().trim();
@@ -1474,24 +1643,15 @@
       }
 
       const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      
-      const ignoreKeywords = [
-        'DOCUMENTO', 'COMMERCIALE', 'CHIUSI', 'P.IVA', 'CARTA', 'SOCIO', 
-        'SCONTO', 'TOTALE', 'BANCOMAT', 'RESTO', 'IMPORTO', 
-        'PAGATO', 'SERVER', 'ECR', 'FIRMA', 'SALDO', 'PUNTI', 'PAGE', 
-        'SOURCE:', 'THE FOLLOWING TABLE', 'DIGIT', 'CASSA', 'OPER', 'AID', 
-        'TCR', 'TAD', 'CID', 'AIP', 'TRANSAZIONE'
-      ];
+      const ignoreKeywords = ['DOCUMENTO', 'COMMERCIALE', 'CHIUSI', 'P.IVA', 'CARTA', 'SOCIO', 'SACCHETTO', 'SCONTO', 'TOTALE', 'BANCOMAT', 'RESTO', 'IMPORTO', 'PAGATO', 'Server', 'ECR', 'Firma', 'SALDO', 'PUNTI'];
 
       unmappedReceiptItems = [];
       mappedReceiptItems = [];
 
       lines.forEach(line => {
         const uppercaseLine = line.toUpperCase();
-
         if (ignoreKeywords.some(k => uppercaseLine.includes(k))) return;
         if (/^\d{2}\/\d{2}\/\d{4}/.test(line)) return;
-        if (/^[\d\s,.\-+*\/A-Z]{1,4}$/.test(line)) return;
 
         const cleanedLine = pulisciVoceScontrino(line);
         if (cleanedLine.length < 3) return;
@@ -1511,17 +1671,29 @@
         }
       });
 
-      if (unmappedReceiptItems.length === 0 && mappedReceiptItems.length === 0) {
-        alert("Nessun alimento trovato nello scontrino.");
-        return;
-      }
-
       document.getElementById('receipt-step-upload').classList.add('hidden');
       document.getElementById('receipt-step-process').classList.remove('hidden');
 
       currentUnmappedIndex = 0;
       renderPart1CurrentItem();
       renderPart2List();
+    }
+
+    function updatePart1ShelfVisibility() {
+      const loc = document.getElementById('part1-location-select').value;
+      const shelfWrapper = document.getElementById('part1-shelf-wrapper');
+      const shelfSelect = document.getElementById('part1-shelf-select');
+
+      if (loc === 'fridge') {
+        shelfWrapper.classList.add('hidden');
+      } else {
+        shelfWrapper.classList.remove('hidden');
+        shelfSelect.innerHTML = '';
+        const shelves = loc === 'freezer' ? freezerShelvesData : pantryShelvesData;
+        Object.entries(shelves).forEach(([id, s]) => {
+          shelfSelect.innerHTML += `<option value="${id}">${s.name}</option>`;
+        });
+      }
     }
 
     function renderPart1CurrentItem() {
@@ -1539,14 +1711,7 @@
       document.getElementById('part1-raw-text').innerText = item.raw;
       document.getElementById('part1-name-input').value = item.cleaned;
 
-      const shelfSelect = document.getElementById('part1-shelf-select');
-      shelfSelect.innerHTML = `<option value="">-- Cassetto Generale --</option>`;
-      Object.entries(fridgeShelvesData).forEach(([id, s]) => {
-        shelfSelect.innerHTML += `<option value="${id}">Frigo: ${s.name}</option>`;
-      });
-      Object.entries(pantryShelvesData).forEach(([id, s]) => {
-        shelfSelect.innerHTML += `<option value="${id}">Dispensa: ${s.name}</option>`;
-      });
+      updatePart1ShelfVisibility();
 
       const mergeAlert = document.getElementById('part1-merge-alert');
       mergeAlert.classList.add('hidden');
@@ -1556,19 +1721,13 @@
         const score = calcolaSimilarita(item.cleaned, mItem.name);
         if (score >= 0.65) {
           currentMergeCandidate = { id: mId, ...mItem };
-          document.getElementById('part1-merge-msg').innerText = `Alimento chiamato "${mItem.name}" già presente in DB. Vuoi unire?`;
+          document.getElementById('part1-merge-msg').innerText = `Alimento chiamato "${mItem.name}" già presente in archivio. Vuoi unire?`;
           mergeAlert.classList.remove('hidden');
           break;
         }
       }
 
       lucide.createIcons();
-    }
-
-    // SALTA L'ELEMENTO SENZA AGGIUNGERLO (PER SACCHETTI O OGGETTI NON DESIDERATI)
-    function skipCurrentNewItem() {
-      currentUnmappedIndex++;
-      renderPart1CurrentItem();
     }
 
     function confirmMergeNewItem() {
@@ -1595,8 +1754,8 @@
     function saveAndNextNewItem() {
       const item = unmappedReceiptItems[currentUnmappedIndex];
       const name = document.getElementById('part1-name-input').value.trim();
-      const shelf = document.getElementById('part1-shelf-select').value || 'generale';
       const location = document.getElementById('part1-location-select').value;
+      const shelf = location === 'fridge' ? '' : document.getElementById('part1-shelf-select').value;
 
       if (!name) return;
 
@@ -1629,27 +1788,20 @@
       }
 
       list.innerHTML = mappedReceiptItems.map((item, idx) => {
-        const shelfName = fridgeShelvesData[item.master.shelfDefault]?.name || pantryShelvesData[item.master.shelfDefault]?.name || 'Generale';
+        const isFridge = item.master.locationDefault === 'fridge';
+        const shelfName = isFridge ? 'Frigo' : (item.master.locationDefault === 'freezer' ? freezerShelvesData[item.master.shelfDefault]?.name : pantryShelvesData[item.master.shelfDefault]?.name) || 'Generale';
         return `
           <div class="flex items-center justify-between p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
             <div>
               <div class="text-xs font-bold text-gray-800 dark:text-gray-100">${item.master.name}</div>
               <div class="text-[10px] text-gray-400">📍 ${shelfName} • (${item.master.locationDefault || 'frigo'})</div>
             </div>
-            <div class="flex gap-1">
-              <button onclick="editPart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-emerald-600" title="Modifica"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-              <button onclick="removePart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-red-500" title="Rimuovi"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-            </div>
+            <button onclick="editPart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
           </div>
         `;
       }).join('');
 
       lucide.createIcons();
-    }
-
-    function removePart2Item(idx) {
-      mappedReceiptItems.splice(idx, 1);
-      renderPart2List();
     }
 
     function editPart2Item(idx) {
@@ -1676,7 +1828,7 @@
 
         db.ref(path).push({
           name: item.master.name,
-          shelf: item.master.shelfDefault || 's1',
+          shelf: targetLoc === 'fridge' ? '' : (item.master.shelfDefault || ''),
           category: 'c1',
           qty: 1,
           entryDate: today,
