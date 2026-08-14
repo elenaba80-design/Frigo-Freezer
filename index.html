@@ -201,8 +201,8 @@
               class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
           </div>
           <select id="fridge-sort-select" onchange="renderFridgeList()" class="px-3 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500 text-gray-700 dark:text-gray-200">
-            <option value="expiry">⏳ Scadenza più vicina</option>
-            <option value="urgent">🚨 Cibi in scadenza / Urgenti</option>
+            <option value="expiry">⏳ Scadenza più vicina (scaduti in cima)</option>
+            <option value="urgent">🚨 Urgenti (scaduti in cima)</option>
             <option value="category">🏷️ Per Categoria</option>
             <option value="alpha">🔤 Ordine Alfabetico (A-Z)</option>
           </select>
@@ -233,8 +233,8 @@
                 class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-cyan-500 outline-none">
             </div>
             <select id="freezer-sort-select" onchange="renderFreezerList()" class="px-3 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-cyan-500 text-gray-700 dark:text-gray-200">
-              <option value="expiry">⏳ Scadenza più vicina</option>
-              <option value="urgent">🚨 Cibi in scadenza / Urgenti</option>
+              <option value="expiry">⏳ Scadenza più vicina (scaduti in cima)</option>
+              <option value="urgent">🚨 Urgenti (scaduti in cima)</option>
               <option value="category">🏷️ Per Categoria</option>
               <option value="alpha">🔤 Ordine Alfabetico (A-Z)</option>
               <option value="shelf">📍 Per Cassetto</option>
@@ -267,8 +267,8 @@
                 class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
             <select id="pantry-sort-select" onchange="renderPantryList()" class="px-3 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700 dark:text-gray-200">
-              <option value="expiry">⏳ Scadenza più vicina</option>
-              <option value="urgent">🚨 Cibi in scadenza / Urgenti</option>
+              <option value="expiry">⏳ Scadenza più vicina (scaduti in cima)</option>
+              <option value="urgent">🚨 Urgenti (scaduti in cima)</option>
               <option value="category">🏷️ Per Categoria</option>
               <option value="alpha">🔤 Ordine Alfabetico (A-Z)</option>
               <option value="shelf">📍 Per Scaffale</option>
@@ -880,19 +880,27 @@
       document.getElementById('pantry-count-nav').innerText = pantryCount;
       document.getElementById('shopping-count-nav').innerText = shoppingCount;
 
-      const today = new Date();
+      const todayKey = getTodayKey();
+      let expiredCount = 0;
       let expiringCount = 0;
+
       Object.values(fridgeData).forEach(item => {
-        if (item.expiryDate) {
-          const diffDays = Math.ceil((new Date(item.expiryDate) - today) / (1000 * 60 * 60 * 24));
+        if (!item.expiryDate) return;
+        if (item.expiryDate < todayKey) {
+          expiredCount++;
+        } else {
+          const diffDays = Math.ceil((new Date(item.expiryDate + 'T00:00:00') - new Date(todayKey + 'T00:00:00')) / 86400000);
           if (diffDays <= 3) expiringCount++;
         }
       });
 
       const alertBox = document.getElementById('home-fridge-alert');
-      if (expiringCount > 0) {
+      if (expiredCount > 0 || expiringCount > 0) {
         alertBox.classList.remove('hidden');
-        document.getElementById('home-fridge-alert-text').innerText = `${expiringCount} in scadenza!`;
+        const parts = [];
+        if (expiredCount > 0) parts.push(`${expiredCount} scaduti`);
+        if (expiringCount > 0) parts.push(`${expiringCount} in scadenza`);
+        document.getElementById('home-fridge-alert-text').innerText = parts.join(' • ');
       } else {
         alertBox.classList.add('hidden');
       }
@@ -1053,6 +1061,69 @@
       }
     }
 
+    // Data odierna in formato YYYY-MM-DD, senza problemi di fuso orario.
+    function getTodayKey() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function isExpired(item) {
+      return !!(item && item.expiryDate && item.expiryDate < getTodayKey());
+    }
+
+    // Sposta un alimento tra Frigo e Freezer mantenendo tutti gli altri dati.
+    // Quando si entra nel Freezer viene richiesto il cassetto di destinazione.
+    function moveFoodItem(id, fromLoc) {
+      const sourceData = fromLoc === 'fridge' ? fridgeData : freezerData;
+      const source = sourceData[id];
+      if (!source) return;
+
+      const toLoc = fromLoc === 'fridge' ? 'freezer' : 'fridge';
+      const toPath = toLoc === 'fridge' ? 'fridge_items' : 'freezer_items';
+      const fromPath = fromLoc === 'fridge' ? 'fridge_items' : 'freezer_items';
+
+      let destinationShelf = '';
+
+      if (toLoc === 'freezer') {
+        const shelves = Object.entries(freezerShelvesData);
+        if (shelves.length === 0) {
+          alert('Non ci sono cassetti Freezer configurati.');
+          return;
+        }
+
+        const options = shelves.map(([sid, s], index) => `${index + 1}. ${s.name}`).join('\n');
+        const choice = prompt(`Sposta "${getBaseFoodName(source.name)}" nel Freezer.\n\nScegli il cassetto:\n${options}\n\nInserisci il numero:`);
+        if (choice === null) return;
+
+        const index = parseInt(choice, 10) - 1;
+        if (index < 0 || index >= shelves.length) {
+          alert('Cassetto non valido. Spostamento annullato.');
+          return;
+        }
+        destinationShelf = shelves[index][0];
+      }
+
+      const movedItem = {
+        ...source,
+        shelf: destinationShelf
+      };
+
+      delete movedItem.id;
+
+      if (!confirm(`Spostare "${getBaseFoodName(source.name)}" da ${fromLoc === 'fridge' ? 'Frigo' : 'Freezer'} a ${toLoc === 'fridge' ? 'Frigo' : 'Freezer'}?`)) return;
+
+      db.ref(toPath).push(movedItem, (err) => {
+        if (err) {
+          alert('Errore durante lo spostamento.');
+          return;
+        }
+        db.ref(`${fromPath}/${id}`).remove();
+      });
+    }
+
     // LISTA GENERICA CON OPZIONE PER MOSTRARE/NASCONDERE RIPIANI
     function renderGenericList(listContainerId, filterBarId, locData, locShelves, selectedShelf, sortSelectId, searchQuery, locCode, colorClass, hasShelves) {
       const filterBar = filterBarId ? document.getElementById(filterBarId) : null;
@@ -1075,20 +1146,24 @@
 
       const sortBy = sortSelect ? sortSelect.value : 'expiry';
       
-      items.sort((a, b) => {
-        if (sortBy === 'expiry' || sortBy === 'urgent') {
-          if (a.isOpenPiece && !b.isOpenPiece) return -1;
-          if (!a.isOpenPiece && b.isOpenPiece) return 1;
-        }
+      // Gli alimenti scaduti hanno sempre la precedenza:
+      // 1) SCADUTI  2) APERTI  3) tutti gli altri.
+      // All'interno di ogni gruppo viene mantenuto l'ordinamento scelto.
+      const todayKey = getTodayKey();
+      const getExpiryRank = (item) => {
+        if (item.expiryDate && item.expiryDate < todayKey) return 0;
+        if (item.isOpenPiece) return 1;
+        return 2;
+      };
 
-        if (sortBy === 'expiry') {
-          if (!a.expiryDate) return 1; if (!b.expiryDate) return -1;
-          return new Date(a.expiryDate) - new Date(b.expiryDate);
-        } else if (sortBy === 'urgent') {
-          const today = new Date();
-          const diffA = Math.ceil(((a.expiryDate ? new Date(a.expiryDate) : new Date(8640000000000000)) - today) / 86400000);
-          const diffB = Math.ceil(((b.expiryDate ? new Date(b.expiryDate) : new Date(8640000000000000)) - today) / 86400000);
-          return diffA - diffB;
+      items.sort((a, b) => {
+        const rankDiff = getExpiryRank(a) - getExpiryRank(b);
+        if (rankDiff !== 0) return rankDiff;
+
+        if (sortBy === 'expiry' || sortBy === 'urgent') {
+          if (!a.expiryDate) return 1;
+          if (!b.expiryDate) return -1;
+          return a.expiryDate.localeCompare(b.expiryDate);
         } else if (sortBy === 'category') {
           return (categoriesData[a.category]?.name || '').localeCompare(categoriesData[b.category]?.name || '');
         } else if (sortBy === 'alpha') {
@@ -1107,7 +1182,10 @@
       items.forEach(item => {
         const cat = categoriesData[item.category] || { name: 'Altro', icon: '📦' };
         const shelfName = hasShelves ? (locShelves[item.shelf]?.name || 'Generale') : null;
-        const cardBgClass = item.isOpenPiece ? 'bg-amber-50/90 dark:bg-amber-950/30 border-amber-300' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700';
+        const expired = isExpired(item);
+        const cardBgClass = expired
+          ? 'bg-red-50/90 dark:bg-red-950/30 border-red-400'
+          : (item.isOpenPiece ? 'bg-amber-50/90 dark:bg-amber-950/30 border-amber-300' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700');
         
         listContainer.innerHTML += `
           <div class="${cardBgClass} p-3 rounded-2xl border shadow-sm flex items-center justify-between gap-3 transition-all">
@@ -1118,12 +1196,13 @@
               <div class="min-w-0">
                 <h4 class="font-bold text-sm leading-snug flex items-center gap-1.5 truncate">
                   <span class="truncate">${item.name}</span>
-                  ${item.isOpenPiece ? `<span class="bg-amber-200 text-amber-800 text-[9px] px-1.5 py-0.5 rounded-full font-bold">APERTO</span>` : ''}
+                  ${expired ? `<span class="bg-red-200 text-red-800 dark:bg-red-900/60 dark:text-red-200 text-[9px] px-1.5 py-0.5 rounded-full font-bold">SCADUTO</span>` : ''}
+                  ${!expired && item.isOpenPiece ? `<span class="bg-amber-200 text-amber-800 text-[9px] px-1.5 py-0.5 rounded-full font-bold">APERTO</span>` : ''}
                 </h4>
                 <div class="text-[11px] text-gray-400 flex items-center gap-2">
                   ${hasShelves ? `<span>📍 ${shelfName}</span> • ` : ''}<span>Qtà: ${item.qty || 1}</span>
                 </div>
-                ${item.expiryDate ? `<span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Scade: ${item.expiryDate}</span>` : ''}
+                ${item.expiryDate ? `<span class="text-[10px] font-semibold ${expired ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}">${expired ? 'Scaduto il' : 'Scade:'} ${item.expiryDate}</span>` : ''}
               </div>
             </div>
             <div class="flex items-center gap-1 flex-shrink-0">
@@ -1132,6 +1211,9 @@
                 ? `<button onclick="closeItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Richiudi"><i data-lucide="package" class="w-4 h-4"></i></button>`
                 : `<button onclick="openItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-amber-600" title="Segna Aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>`
               }
+              ${locCode === 'fridge' || locCode === 'freezer'
+                ? `<button onclick="moveFoodItem('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-cyan-600" title="${locCode === 'fridge' ? 'Sposta nel Freezer' : 'Sposta nel Frigo'}"><i data-lucide="arrow-left-right" class="w-4 h-4"></i></button>`
+                : ''}
               <button onclick="duplicateFoodItem('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Duplica"><i data-lucide="copy" class="w-4 h-4"></i></button>
               <button onclick="openEditModal('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Modifica"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
               <button onclick="deleteFoodItem('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-red-500" title="Elimina"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
