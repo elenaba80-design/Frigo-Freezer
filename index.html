@@ -16,7 +16,7 @@
     tailwind.config = { darkMode: 'media' }
   </script>
 </head>
-<body class="h-full text-gray-800 dark:text-gray-100 font-sans pb-24 md:pb-6">
+<body class="h-full text-gray-800 dark:text-gray-100 font-sans pb-28 md:pb-12">
 
   <div class="max-w-6xl mx-auto min-h-screen flex flex-col px-4 py-4">
 
@@ -332,8 +332,8 @@
             <input type="date" id="add-entry-date" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-xs outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Scadenza</label>
-            <input type="date" id="add-expiry-date" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-xs outline-none">
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Scadenza (Opz.)</label>
+            <input type="date" id="add-expiry-date" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-xs outline-none">
           </div>
         </div>
 
@@ -443,6 +443,63 @@
 
   </div>
 
+  <div id="bulk-action-bar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-gray-700 dark:border-gray-300 hidden transition-all">
+    <div class="text-xs font-bold flex items-center gap-1.5">
+      <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]" id="bulk-selected-count">0</span>
+      <span>Selezionati</span>
+    </div>
+    <div class="h-4 w-px bg-gray-700 dark:bg-gray-300"></div>
+    <button onclick="openBulkCategoryModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 dark:bg-gray-200 dark:hover:bg-gray-300 rounded-xl text-xs font-bold transition">
+      <i data-lucide="tag" class="w-3.5 h-3.5 text-amber-400"></i> Cambia Categoria
+    </button>
+    <button onclick="openBulkMoveModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">
+      <i data-lucide="arrow-left-right" class="w-3.5 h-3.5"></i> Sposta Reparto
+    </button>
+    <button onclick="clearBulkSelection()" class="p-1.5 text-gray-400 hover:text-white dark:hover:text-black rounded-lg" title="Deseleziona tutto">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+  </div>
+
+  <div id="modal-bulk-category" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-5 space-y-4 border border-gray-100 dark:border-gray-700">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-base">Cambia Categoria in Massa</h3>
+        <button onclick="closeModal('modal-bulk-category')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nuova Categoria</label>
+        <select id="bulk-category-select" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none"></select>
+      </div>
+      <button onclick="applyBulkCategoryChange()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition">
+        Applica a Tutti i Selezionati
+      </button>
+    </div>
+  </div>
+
+  <div id="modal-bulk-move" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-5 space-y-4 border border-gray-100 dark:border-gray-700">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-base">Sposta Alimenti Selezionati</h3>
+        <button onclick="closeModal('modal-bulk-move')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nuova Destinazione</label>
+        <select id="bulk-move-target" onchange="updateBulkMoveShelfVisibility()" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none">
+          <option value="fridge">🥗 Frigo</option>
+          <option value="freezer">❄️ Freezer</option>
+          <option value="pantry">🗄️ Dispensa</option>
+        </select>
+      </div>
+      <div id="bulk-move-shelf-wrapper" class="hidden">
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ripiano / Cassetto</label>
+        <select id="bulk-move-shelf-select" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none"></select>
+      </div>
+      <button onclick="applyBulkMove()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition">
+        Conferma Spostamento
+      </button>
+    </div>
+  </div>
+
   <div id="modal-edit-food" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
     <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-5 space-y-4 border border-gray-100 dark:border-gray-700">
       <div class="flex justify-between items-center">
@@ -472,8 +529,8 @@
             <input type="number" id="edit-qty" min="1" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Data Scadenza</label>
-            <input type="date" id="edit-expiry-date" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm">
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Data Scadenza (Opzionale)</label>
+            <input type="date" id="edit-expiry-date" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm">
           </div>
         </div>
         <div>
@@ -664,6 +721,9 @@
             </div>
 
             <div class="flex gap-2 pt-1">
+              <button onclick="skipNewItem()" class="px-3 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-bold rounded-xl text-xs transition">
+                Salta questo Alimento
+              </button>
               <button onclick="saveAndNextNewItem()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm">
                 Salva e Passa al Successivo
               </button>
@@ -723,6 +783,9 @@
     let isIngredientStateInitialized = false;
     let isVeganOnlyFilter = false;
 
+    // SELEZIONE MULTIPLA ALIMENTI
+    let selectedItemsForBulk = new Map(); // key: id, value: { id, location }
+
     // PARSER SCONTRINO
     let unmappedReceiptItems = [];
     let mappedReceiptItems = [];
@@ -735,7 +798,6 @@
       '🍋', '🫐', '🍟', '🥟', '📦', '🍦', '🧊', '🏷️', '🍪', '🍯'
     ];
 
-    // CATALOGO RICETTE PREDEFINITE PER AI SVUOTA-TUTTO
     const builtinAIRecipes = [
       { id: 'ai1', title: 'Hummus Tradizionale di Ceci', ingredients: ['Ceci', 'Limone', 'Olio', 'Aglio', 'Tahina'], isVegan: true, link: '' },
       { id: 'ai2', title: 'Pasta Integrale al Sugo di Pomodoro e Basilico', ingredients: ['Pasta integrale', 'Passata di pomodoro', 'Olio', 'Aglio', 'Basilico'], isVegan: true, link: '' },
@@ -804,10 +866,8 @@
 
     function setupDefaultDates() {
       const today = new Date().toISOString().split('T')[0];
-      const expiry = new Date();
-      expiry.setDate(expiry.getDate() + 7);
       document.getElementById('add-entry-date').value = today;
-      document.getElementById('add-expiry-date').value = expiry.toISOString().split('T')[0];
+      document.getElementById('add-expiry-date').value = '';
     }
 
     function switchTab(tabId) {
@@ -901,6 +961,7 @@
       renderShelvesManageList();
       renderCategoriesManageList();
       renderRecipes();
+      updateBulkActionBar();
       lucide.createIcons();
     }
 
@@ -1099,7 +1160,6 @@
       }
     }
 
-    // Data odierna in formato YYYY-MM-DD, senza problemi di fuso orario.
     function getTodayKey() {
       const now = new Date();
       const y = now.getFullYear();
@@ -1112,46 +1172,148 @@
       return !!(item && item.expiryDate && item.expiryDate < getTodayKey());
     }
 
-    // Sposta un alimento tra Frigo e Freezer mantenendo tutti gli altri dati.
-    // Quando si entra nel Freezer viene richiesto il cassetto di destinazione.
+    // GESTIONE SELEZIONE MULTIPLA (BULK)
+    function toggleBulkItemSelection(id, location, event) {
+      event.stopPropagation();
+      const selectionKey = `${location}:${id}`;
+      if (selectedItemsForBulk.has(selectionKey)) {
+        selectedItemsForBulk.delete(selectionKey);
+      } else {
+        selectedItemsForBulk.set(selectionKey, { id, location });
+      }
+      updateBulkActionBar();
+    }
+
+    function updateBulkActionBar() {
+      const bar = document.getElementById('bulk-action-bar');
+      const countEl = document.getElementById('bulk-selected-count');
+      if (!bar || !countEl) return;
+      const count = selectedItemsForBulk.size;
+      if (count > 0) {
+        countEl.innerText = count;
+        bar.classList.remove('hidden');
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    function clearBulkSelection() {
+      selectedItemsForBulk.clear();
+      renderAll();
+    }
+
+    function openBulkCategoryModal() {
+      const catSelect = document.getElementById('bulk-category-select');
+      catSelect.innerHTML = '';
+      Object.entries(categoriesData).forEach(([id, c]) => {
+        catSelect.innerHTML += `<option value="${id}">${c.name}</option>`;
+      });
+      document.getElementById('modal-bulk-category').classList.remove('hidden');
+    }
+
+    function applyBulkCategoryChange() {
+      const newCategory = document.getElementById('bulk-category-select').value;
+      if (!newCategory) return;
+
+      selectedItemsForBulk.forEach(({ id, location }) => {
+        const path = location === 'fridge' ? 'fridge_items' : (location === 'freezer' ? 'freezer_items' : 'pantry_items');
+        db.ref(`${path}/${id}`).update({ category: newCategory });
+      });
+
+      closeModal('modal-bulk-category');
+      clearBulkSelection();
+    }
+
+    function openBulkMoveModal() {
+      updateBulkMoveShelfVisibility();
+      document.getElementById('modal-bulk-move').classList.remove('hidden');
+    }
+
+    function updateBulkMoveShelfVisibility() {
+      const targetLoc = document.getElementById('bulk-move-target').value;
+      const wrapper = document.getElementById('bulk-move-shelf-wrapper');
+      const select = document.getElementById('bulk-move-shelf-select');
+      if (targetLoc === 'fridge') {
+        wrapper.classList.add('hidden');
+      } else {
+        wrapper.classList.remove('hidden');
+        select.innerHTML = '';
+        const shelves = targetLoc === 'freezer' ? freezerShelvesData : pantryShelvesData;
+        Object.entries(shelves).forEach(([id, s]) => {
+          select.innerHTML += `<option value="${id}">${s.name}</option>`;
+        });
+      }
+    }
+
+    function applyBulkMove() {
+      const toLoc = document.getElementById('bulk-move-target').value;
+      const toShelf = toLoc === 'fridge' ? '' : document.getElementById('bulk-move-shelf-select').value;
+      const toPath = toLoc === 'fridge' ? 'fridge_items' : (toLoc === 'freezer' ? 'freezer_items' : 'pantry_items');
+
+      selectedItemsForBulk.forEach(({ id, location }) => {
+        const fromData = location === 'fridge' ? fridgeData : (location === 'freezer' ? freezerData : pantryData);
+        const source = fromData[id];
+        if (source) {
+          const fromPath = location === 'fridge' ? 'fridge_items' : (location === 'freezer' ? 'freezer_items' : 'pantry_items');
+          const movedItem = { ...source, shelf: toShelf };
+          delete movedItem.id;
+          db.ref(toPath).push(movedItem, (err) => {
+            if (!err) db.ref(`${fromPath}/${id}`).remove();
+          });
+        }
+      });
+
+      closeModal('modal-bulk-move');
+      clearBulkSelection();
+    }
+
     function moveFoodItem(id, fromLoc) {
-      const sourceData = fromLoc === 'fridge' ? fridgeData : freezerData;
+      const sourceData = fromLoc === 'fridge' ? fridgeData : (fromLoc === 'freezer' ? freezerData : pantryData);
       const source = sourceData[id];
       if (!source) return;
 
-      const toLoc = fromLoc === 'fridge' ? 'freezer' : 'fridge';
-      const toPath = toLoc === 'fridge' ? 'fridge_items' : 'freezer_items';
-      const fromPath = fromLoc === 'fridge' ? 'fridge_items' : 'freezer_items';
+      const locNames = { fridge: '🥗 Frigo', freezer: '❄️ Freezer', pantry: '🗄️ Dispensa' };
+      const targets = [
+        { code: 'fridge', label: '🥗 Frigo' },
+        { code: 'freezer', label: '❄️ Freezer' },
+        { code: 'pantry', label: '🗄️ Dispensa' }
+      ].filter(t => t.code !== fromLoc);
+
+      const targetOptionsText = targets.map((t, idx) => `${idx + 1}. ${t.label}`).join('\n');
+      const choice = prompt(`Sposta "${getBaseFoodName(source.name)}" da ${locNames[fromLoc]}.\n\nDove vuoi spostarlo?\n${targetOptionsText}\n\nInserisci il numero:`);
+      if (choice === null) return;
+
+      const targetIndex = parseInt(choice, 10) - 1;
+      if (targetIndex < 0 || targetIndex >= targets.length) {
+        alert('Destinazione non valida. Spostamento annullato.');
+        return;
+      }
+
+      const toLoc = targets[targetIndex].code;
+      const toPath = toLoc === 'fridge' ? 'fridge_items' : (toLoc === 'freezer' ? 'freezer_items' : 'pantry_items');
+      const fromPath = fromLoc === 'fridge' ? 'fridge_items' : (fromLoc === 'freezer' ? 'freezer_items' : 'pantry_items');
 
       let destinationShelf = '';
 
-      if (toLoc === 'freezer') {
-        const shelves = Object.entries(freezerShelvesData);
-        if (shelves.length === 0) {
-          alert('Non ci sono cassetti Freezer configurati.');
-          return;
+      if (toLoc === 'freezer' || toLoc === 'pantry') {
+        const shelves = Object.entries(toLoc === 'freezer' ? freezerShelvesData : pantryShelvesData);
+        if (shelves.length > 0) {
+          const shelfOptions = shelves.map(([sid, s], index) => `${index + 1}. ${s.name}`).join('\n');
+          const shelfChoice = prompt(`Scegli il cassetto/scaffale di destinazione:\n${shelfOptions}\n\nInserisci il numero (o Annulla per predefinito):`);
+          if (shelfChoice !== null) {
+            const sIdx = parseInt(shelfChoice, 10) - 1;
+            if (sIdx >= 0 && sIdx < shelves.length) {
+              destinationShelf = shelves[sIdx][0];
+            }
+          }
         }
-
-        const options = shelves.map(([sid, s], index) => `${index + 1}. ${s.name}`).join('\n');
-        const choice = prompt(`Sposta "${getBaseFoodName(source.name)}" nel Freezer.\n\nScegli il cassetto:\n${options}\n\nInserisci il numero:`);
-        if (choice === null) return;
-
-        const index = parseInt(choice, 10) - 1;
-        if (index < 0 || index >= shelves.length) {
-          alert('Cassetto non valido. Spostamento annullato.');
-          return;
-        }
-        destinationShelf = shelves[index][0];
       }
 
       const movedItem = {
         ...source,
         shelf: destinationShelf
       };
-
       delete movedItem.id;
-
-      if (!confirm(`Spostare "${getBaseFoodName(source.name)}" da ${fromLoc === 'fridge' ? 'Frigo' : 'Freezer'} a ${toLoc === 'fridge' ? 'Frigo' : 'Freezer'}?`)) return;
 
       db.ref(toPath).push(movedItem, (err) => {
         if (err) {
@@ -1162,7 +1324,6 @@
       });
     }
 
-    // LISTA GENERICA CON OPZIONE PER MOSTRARE/NASCONDERE RIPIANI
     function renderGenericList(listContainerId, filterBarId, locData, locShelves, selectedShelf, sortSelectId, searchQuery, locCode, colorClass, hasShelves) {
       const filterBar = filterBarId ? document.getElementById(filterBarId) : null;
       const listContainer = document.getElementById(listContainerId);
@@ -1183,10 +1344,6 @@
       if (searchQuery) items = items.filter(i => i.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const sortBy = sortSelect ? sortSelect.value : 'expiry';
-      
-      // Gli alimenti scaduti hanno sempre la precedenza:
-      // 1) SCADUTI  2) APERTI  3) tutti gli altri.
-      // All'interno di ogni gruppo viene mantenuto l'ordinamento scelto.
       const todayKey = getTodayKey();
       const getExpiryRank = (item) => {
         if (item.expiryDate && item.expiryDate < todayKey) return 0;
@@ -1221,13 +1378,21 @@
         const cat = categoriesData[item.category] || { name: 'Altro', icon: '📦' };
         const shelfName = hasShelves ? (locShelves[item.shelf]?.name || 'Generale') : null;
         const expired = isExpired(item);
-        const cardBgClass = expired
-          ? 'bg-red-50/90 dark:bg-red-950/30 border-red-400'
-          : (item.isOpenPiece ? 'bg-amber-50/90 dark:bg-amber-950/30 border-amber-300' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700');
+        const isSelected = selectedItemsForBulk.has(`${locCode}:${item.id}`);
+        
+        let cardBgClass = 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700';
+        if (isSelected) {
+          cardBgClass = 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500';
+        } else if (expired) {
+          cardBgClass = 'bg-red-50/90 dark:bg-red-950/30 border-red-400';
+        } else if (item.isOpenPiece) {
+          cardBgClass = 'bg-amber-50/90 dark:bg-amber-950/30 border-amber-300';
+        }
         
         listContainer.innerHTML += `
           <div class="${cardBgClass} p-3 rounded-2xl border shadow-sm flex items-center justify-between gap-3 transition-all">
             <div class="flex items-center gap-3 min-w-0">
+              <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="toggleBulkItemSelection('${item.id}', '${locCode}', event)" class="w-4 h-4 rounded text-emerald-600 accent-emerald-600 cursor-pointer flex-shrink-0">
               <div class="w-10 h-10 flex-shrink-0 rounded-xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-xl overflow-hidden cursor-pointer" onclick="${item.photo ? `openLightbox('${item.photo}')` : ''}">
                 ${item.photo ? `<img src="${item.photo}" class="w-full h-full object-cover">` : getCategoryIconHtml(cat)}
               </div>
@@ -1249,9 +1414,7 @@
                 ? `<button onclick="closeItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Richiudi"><i data-lucide="package" class="w-4 h-4"></i></button>`
                 : `<button onclick="openItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-amber-600" title="Segna Aperto"><i data-lucide="package-open" class="w-4 h-4"></i></button>`
               }
-              ${locCode === 'fridge' || locCode === 'freezer'
-                ? `<button onclick="moveFoodItem('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-cyan-600" title="${locCode === 'fridge' ? 'Sposta nel Freezer' : 'Sposta nel Frigo'}"><i data-lucide="arrow-left-right" class="w-4 h-4"></i></button>`
-                : ''}
+              <button onclick="moveFoodItem('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-cyan-600" title="Sposta reparto"><i data-lucide="arrow-left-right" class="w-4 h-4"></i></button>
               <button onclick="duplicateFoodItem('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Duplica"><i data-lucide="copy" class="w-4 h-4"></i></button>
               <button onclick="openEditModal('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Modifica"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
               <button onclick="deleteFoodItem('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-red-500" title="Elimina"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
@@ -1384,13 +1547,22 @@
       const loc = document.getElementById('edit-location').value;
       const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
       
+      const expiryDate = document.getElementById('edit-expiry-date').value;
+
       const payload = {
         name: document.getElementById('edit-name').value,
         category: document.getElementById('edit-category').value,
         qty: parseInt(document.getElementById('edit-qty').value),
-        expiryDate: document.getElementById('edit-expiry-date').value,
         notes: document.getElementById('edit-notes').value
       };
+
+      // La scadenza è facoltativa: se viene lasciata vuota in modifica,
+      // rimuoviamo completamente la vecchia scadenza dal database.
+      if (expiryDate) {
+        payload.expiryDate = expiryDate;
+      } else {
+        payload.expiryDate = null;
+      }
 
       if (loc !== 'fridge') {
         payload.shelf = document.getElementById('edit-shelf').value;
@@ -1400,10 +1572,6 @@
         closeModal('modal-edit-food');
       });
     }
-
-    // =========================================================
-    // GESTIONE COMPLETA RICETTE & SVUOTA TUTTO
-    // =========================================================
 
     function toggleAddRecipeForm() { 
       document.getElementById('add-recipe-form-card').classList.toggle('hidden'); 
@@ -1506,7 +1674,6 @@
         isIngredientStateInitialized = true;
       }
 
-      // 1. Render Selettore Ingredienti Disponibili
       const selectorContainer = document.getElementById('recipe-ingredients-selector');
       if (selectorContainer) {
         if (availableItems.length === 0) {
@@ -1526,7 +1693,6 @@
 
       const searchQuery = (document.getElementById('recipe-search-input')?.value || '').toLowerCase().trim();
 
-      // Funzione di match ricetta
       const matchesRecipe = (rec) => {
         if (isVeganOnlyFilter && !rec.isVegan) return false;
         
@@ -1541,7 +1707,6 @@
         return true;
       };
 
-      // 2. Render Ricette Personali
       const myRecipesContainer = document.getElementById('my-recipes-container');
       const myRecipesList = Object.entries(recipesData).map(([id, r]) => ({ id, ...r })).filter(matchesRecipe);
 
@@ -1553,7 +1718,6 @@
         }
       }
 
-      // 3. Render Ricette AI
       const aiContainer = document.getElementById('ai-recipes-container');
       const aiList = builtinAIRecipes.filter(matchesRecipe);
 
@@ -1571,7 +1735,6 @@
     function renderRecipeCard(rec, isCustom) {
       const ingList = Array.isArray(rec.ingredients) ? rec.ingredients : (rec.ingredients ? rec.ingredients.split(',') : []);
       
-      // Calcola quanti ingredienti sono disponibili in casa
       let matchedCount = 0;
       ingList.forEach(ing => {
         const cleaned = ing.trim().toLowerCase();
@@ -1618,7 +1781,6 @@
       `;
     }
 
-    // GESTIONE RIPIANI
     function openShelvesModal() { document.getElementById('modal-shelves').classList.remove('hidden'); renderShelvesManageList(); }
     
     function switchManageShelfTab(tab) {
@@ -1658,7 +1820,6 @@
     }
     function deleteShelf(path, id) { if (confirm("Eliminare questa posizione?")) db.ref(`${path}/${id}`).remove(); }
 
-    // CATEGORIE & UTILS
     function openCategoriesModal() {
       document.getElementById('modal-categories').classList.remove('hidden');
       renderCategoriesManageList();
@@ -1866,215 +2027,3 @@
       return raw.replace(/[\d,.]+\s*[DAB]/gi, '')
                 .replace(/X\d+[\d,.]*/gi, '')
                 .replace(/CONF|KG|G\d+|LT\d+|MCAT\.A|IGP|SF\|CE/gi, '')
-                .replace(/[-+]\d+[\d,.]*/g, '')
-                .trim();
-    }
-
-    function processReceiptText() {
-      const text = document.getElementById('receipt-text-input').value;
-      if (!text.trim()) {
-        alert("Inserisci o incolla il testo dello scontrino!");
-        return;
-      }
-
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      const ignoreKeywords = ['DOCUMENTO', 'COMMERCIALE', 'CHIUSI', 'P.IVA', 'CARTA', 'SOCIO', 'SACCHETTO', 'SCONTO', 'TOTALE', 'BANCOMAT', 'RESTO', 'IMPORTO', 'PAGATO', 'Server', 'ECR', 'Firma', 'SALDO', 'PUNTI'];
-
-      unmappedReceiptItems = [];
-      mappedReceiptItems = [];
-
-      lines.forEach(line => {
-        const uppercaseLine = line.toUpperCase();
-        if (ignoreKeywords.some(k => uppercaseLine.includes(k))) return;
-        if (/^\d{2}\/\d{2}\/\d{4}/.test(line)) return;
-
-        const cleanedLine = pulisciVoceScontrino(line);
-        if (cleanedLine.length < 3) return;
-
-        let matchedMaster = null;
-        Object.entries(masterDbData).forEach(([id, item]) => {
-          const aliases = item.aliases || [];
-          if (item.name.toLowerCase() === cleanedLine.toLowerCase() || aliases.some(a => a.toLowerCase() === cleanedLine.toLowerCase())) {
-            matchedMaster = { id, ...item };
-          }
-        });
-
-        if (matchedMaster) {
-          mappedReceiptItems.push({ raw: line, cleaned: cleanedLine, master: matchedMaster });
-        } else {
-          unmappedReceiptItems.push({ raw: line, cleaned: cleanedLine });
-        }
-      });
-
-      document.getElementById('receipt-step-upload').classList.add('hidden');
-      document.getElementById('receipt-step-process').classList.remove('hidden');
-
-      currentUnmappedIndex = 0;
-      renderPart1CurrentItem();
-      renderPart2List();
-    }
-
-    function updatePart1ShelfVisibility() {
-      const loc = document.getElementById('part1-location-select').value;
-      const shelfWrapper = document.getElementById('part1-shelf-wrapper');
-      const shelfSelect = document.getElementById('part1-shelf-select');
-
-      if (loc === 'fridge') {
-        shelfWrapper.classList.add('hidden');
-      } else {
-        shelfWrapper.classList.remove('hidden');
-        shelfSelect.innerHTML = '';
-        const shelves = loc === 'freezer' ? freezerShelvesData : pantryShelvesData;
-        Object.entries(shelves).forEach(([id, s]) => {
-          shelfSelect.innerHTML += `<option value="${id}">${s.name}</option>`;
-        });
-      }
-    }
-
-    function renderPart1CurrentItem() {
-      const container = document.getElementById('receipt-part1-container');
-      if (currentUnmappedIndex >= unmappedReceiptItems.length) {
-        container.classList.add('hidden');
-        return;
-      }
-
-      container.classList.remove('hidden');
-      const item = unmappedReceiptItems[currentUnmappedIndex];
-
-      document.getElementById('part1-current-index').innerText = currentUnmappedIndex + 1;
-      document.getElementById('part1-total-count').innerText = unmappedReceiptItems.length;
-      document.getElementById('part1-raw-text').innerText = item.raw;
-      document.getElementById('part1-name-input').value = item.cleaned;
-
-      updatePart1ShelfVisibility();
-
-      const mergeAlert = document.getElementById('part1-merge-alert');
-      mergeAlert.classList.add('hidden');
-      currentMergeCandidate = null;
-
-      for (let [mId, mItem] of Object.entries(masterDbData)) {
-        const score = calcolaSimilarita(item.cleaned, mItem.name);
-        if (score >= 0.65) {
-          currentMergeCandidate = { id: mId, ...mItem };
-          document.getElementById('part1-merge-msg').innerText = `Alimento chiamato "${mItem.name}" già presente in archivio. Vuoi unire?`;
-          mergeAlert.classList.remove('hidden');
-          break;
-        }
-      }
-
-      lucide.createIcons();
-    }
-
-    function confirmMergeNewItem() {
-      if (!currentMergeCandidate) return;
-      const item = unmappedReceiptItems[currentUnmappedIndex];
-
-      const updatedAliases = currentMergeCandidate.aliases || [];
-      if (!updatedAliases.includes(item.cleaned)) {
-        updatedAliases.push(item.cleaned);
-      }
-
-      db.ref(`master_db/${currentMergeCandidate.id}`).update({ aliases: updatedAliases }, () => {
-        mappedReceiptItems.push({
-          raw: item.raw,
-          cleaned: item.cleaned,
-          master: { ...currentMergeCandidate, aliases: updatedAliases }
-        });
-        currentUnmappedIndex++;
-        renderPart1CurrentItem();
-        renderPart2List();
-      });
-    }
-
-    function saveAndNextNewItem() {
-      const item = unmappedReceiptItems[currentUnmappedIndex];
-      const name = document.getElementById('part1-name-input').value.trim();
-      const location = document.getElementById('part1-location-select').value;
-      const shelf = location === 'fridge' ? '' : document.getElementById('part1-shelf-select').value;
-
-      if (!name) return;
-
-      const newMaster = {
-        name: name,
-        shelfDefault: shelf,
-        locationDefault: location,
-        aliases: [item.cleaned]
-      };
-
-      const newRef = db.ref("master_db").push(newMaster);
-      mappedReceiptItems.push({
-        raw: item.raw,
-        cleaned: item.cleaned,
-        master: { id: newRef.key, ...newMaster }
-      });
-
-      currentUnmappedIndex++;
-      renderPart1CurrentItem();
-      renderPart2List();
-    }
-
-    function renderPart2List() {
-      const list = document.getElementById('part2-items-list');
-      document.getElementById('part2-count').innerText = mappedReceiptItems.length;
-
-      if (mappedReceiptItems.length === 0) {
-        list.innerHTML = `<div class="text-xs text-gray-400 py-4 text-center">Nessun cibo pronto. Configura i cibi nuovi sopra.</div>`;
-        return;
-      }
-
-      list.innerHTML = mappedReceiptItems.map((item, idx) => {
-        const isFridge = item.master.locationDefault === 'fridge';
-        const shelfName = isFridge ? 'Frigo' : (item.master.locationDefault === 'freezer' ? freezerShelvesData[item.master.shelfDefault]?.name : pantryShelvesData[item.master.shelfDefault]?.name) || 'Generale';
-        return `
-          <div class="flex items-center justify-between p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
-            <div>
-              <div class="text-xs font-bold text-gray-800 dark:text-gray-100">${item.master.name}</div>
-              <div class="text-[10px] text-gray-400">📍 ${shelfName} • (${item.master.locationDefault || 'frigo'})</div>
-            </div>
-            <button onclick="editPart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-          </div>
-        `;
-      }).join('');
-
-      lucide.createIcons();
-    }
-
-    function editPart2Item(idx) {
-      const removed = mappedReceiptItems.splice(idx, 1)[0];
-      unmappedReceiptItems.splice(currentUnmappedIndex, 0, { raw: removed.raw, cleaned: removed.cleaned });
-      renderPart1CurrentItem();
-      renderPart2List();
-    }
-
-    function addAllMassRecognizedItems() {
-      if (mappedReceiptItems.length === 0) {
-        alert("Nessun alimento pronto da inserire!");
-        return;
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      const expiry = new Date();
-      expiry.setDate(expiry.getDate() + 7);
-      const defaultExpiry = expiry.toISOString().split('T')[0];
-
-      mappedReceiptItems.forEach(item => {
-        const targetLoc = item.master.locationDefault || 'fridge';
-        const path = targetLoc === 'fridge' ? 'fridge_items' : (targetLoc === 'freezer' ? 'freezer_items' : 'pantry_items');
-
-        db.ref(path).push({
-          name: item.master.name,
-          shelf: targetLoc === 'fridge' ? '' : (item.master.shelfDefault || ''),
-          category: 'c1',
-          qty: 1,
-          entryDate: today,
-          expiryDate: defaultExpiry,
-          isOpenPiece: false
-        });
-      });
-
-      alert(`🚀 ${mappedReceiptItems.length} alimenti inseriti con successo nell'inventario!`);
-      closeModal('modal-receipt');
-    }
-  </script>
-</body>
-</html>
