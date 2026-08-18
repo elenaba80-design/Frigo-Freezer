@@ -1175,11 +1175,10 @@
     // GESTIONE SELEZIONE MULTIPLA (BULK)
     function toggleBulkItemSelection(id, location, event) {
       event.stopPropagation();
-      const selectionKey = `${location}:${id}`;
-      if (selectedItemsForBulk.has(selectionKey)) {
-        selectedItemsForBulk.delete(selectionKey);
+      if (selectedItemsForBulk.has(id)) {
+        selectedItemsForBulk.delete(id);
       } else {
-        selectedItemsForBulk.set(selectionKey, { id, location });
+        selectedItemsForBulk.set(id, { id, location });
       }
       updateBulkActionBar();
     }
@@ -1378,7 +1377,7 @@
         const cat = categoriesData[item.category] || { name: 'Altro', icon: '📦' };
         const shelfName = hasShelves ? (locShelves[item.shelf]?.name || 'Generale') : null;
         const expired = isExpired(item);
-        const isSelected = selectedItemsForBulk.has(`${locCode}:${item.id}`);
+        const isSelected = selectedItemsForBulk.has(item.id);
         
         let cardBgClass = 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700';
         if (isSelected) {
@@ -1547,22 +1546,13 @@
       const loc = document.getElementById('edit-location').value;
       const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
       
-      const expiryDate = document.getElementById('edit-expiry-date').value;
-
       const payload = {
         name: document.getElementById('edit-name').value,
         category: document.getElementById('edit-category').value,
         qty: parseInt(document.getElementById('edit-qty').value),
+        expiryDate: document.getElementById('edit-expiry-date').value,
         notes: document.getElementById('edit-notes').value
       };
-
-      // La scadenza è facoltativa: se viene lasciata vuota in modifica,
-      // rimuoviamo completamente la vecchia scadenza dal database.
-      if (expiryDate) {
-        payload.expiryDate = expiryDate;
-      } else {
-        payload.expiryDate = null;
-      }
 
       if (loc !== 'fridge') {
         payload.shelf = document.getElementById('edit-shelf').value;
@@ -2027,3 +2017,218 @@
       return raw.replace(/[\d,.]+\s*[DAB]/gi, '')
                 .replace(/X\d+[\d,.]*/gi, '')
                 .replace(/CONF|KG|G\d+|LT\d+|MCAT\.A|IGP|SF\|CE/gi, '')
+                .replace(/[-+]\d+[\d,.]*/g, '')
+                .trim();
+    }
+
+    function processReceiptText() {
+      const text = document.getElementById('receipt-text-input').value;
+      if (!text.trim()) {
+        alert("Inserisci o incolla il testo dello scontrino!");
+        return;
+      }
+
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const ignoreKeywords = ['DOCUMENTO', 'COMMERCIALE', 'CHIUSI', 'P.IVA', 'CARTA', 'SOCIO', 'SACCHETTO', 'SCONTO', 'TOTALE', 'BANCOMAT', 'RESTO', 'IMPORTO', 'PAGATO', 'Server', 'ECR', 'Firma', 'SALDO', 'PUNTI'];
+
+      unmappedReceiptItems = [];
+      mappedReceiptItems = [];
+
+      lines.forEach(line => {
+        const uppercaseLine = line.toUpperCase();
+        if (ignoreKeywords.some(k => uppercaseLine.includes(k))) return;
+        if (/^\d{2}\/\d{2}\/\d{4}/.test(line)) return;
+
+        const cleanedLine = pulisciVoceScontrino(line);
+        if (cleanedLine.length < 3) return;
+
+        let matchedMaster = null;
+        Object.entries(masterDbData).forEach(([id, item]) => {
+          const aliases = item.aliases || [];
+          if (item.name.toLowerCase() === cleanedLine.toLowerCase() || aliases.some(a => a.toLowerCase() === cleanedLine.toLowerCase())) {
+            matchedMaster = { id, ...item };
+          }
+        });
+
+        if (matchedMaster) {
+          mappedReceiptItems.push({ raw: line, cleaned: cleanedLine, master: matchedMaster });
+        } else {
+          unmappedReceiptItems.push({ raw: line, cleaned: cleanedLine });
+        }
+      });
+
+      document.getElementById('receipt-step-upload').classList.add('hidden');
+      document.getElementById('receipt-step-process').classList.remove('hidden');
+
+      currentUnmappedIndex = 0;
+      renderPart1CurrentItem();
+      renderPart2List();
+    }
+
+    function updatePart1ShelfVisibility() {
+      const loc = document.getElementById('part1-location-select').value;
+      const shelfWrapper = document.getElementById('part1-shelf-wrapper');
+      const shelfSelect = document.getElementById('part1-shelf-select');
+
+      if (loc === 'fridge') {
+        shelfWrapper.classList.add('hidden');
+      } else {
+        shelfWrapper.classList.remove('hidden');
+        shelfSelect.innerHTML = '';
+        const shelves = loc === 'freezer' ? freezerShelvesData : pantryShelvesData;
+        Object.entries(shelves).forEach(([id, s]) => {
+          shelfSelect.innerHTML += `<option value="${id}">${s.name}</option>`;
+        });
+      }
+    }
+
+    function renderPart1CurrentItem() {
+      const container = document.getElementById('receipt-part1-container');
+      if (currentUnmappedIndex >= unmappedReceiptItems.length) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      container.classList.remove('hidden');
+      const item = unmappedReceiptItems[currentUnmappedIndex];
+
+      document.getElementById('part1-current-index').innerText = currentUnmappedIndex + 1;
+      document.getElementById('part1-total-count').innerText = unmappedReceiptItems.length;
+      document.getElementById('part1-raw-text').innerText = item.raw;
+      document.getElementById('part1-name-input').value = item.cleaned;
+
+      updatePart1ShelfVisibility();
+
+      const mergeAlert = document.getElementById('part1-merge-alert');
+      mergeAlert.classList.add('hidden');
+      currentMergeCandidate = null;
+
+      for (let [mId, mItem] of Object.entries(masterDbData)) {
+        const score = calcolaSimilarita(item.cleaned, mItem.name);
+        if (score >= 0.65) {
+          currentMergeCandidate = { id: mId, ...mItem };
+          document.getElementById('part1-merge-msg').innerText = `Alimento chiamato "${mItem.name}" già presente in archivio. Vuoi unire?`;
+          mergeAlert.classList.remove('hidden');
+          break;
+        }
+      }
+
+      lucide.createIcons();
+    }
+
+    function skipNewItem() {
+      currentUnmappedIndex++;
+      renderPart1CurrentItem();
+      renderPart2List();
+    }
+
+    function confirmMergeNewItem() {
+      if (!currentMergeCandidate) return;
+      const item = unmappedReceiptItems[currentUnmappedIndex];
+
+      const updatedAliases = currentMergeCandidate.aliases || [];
+      if (!updatedAliases.includes(item.cleaned)) {
+        updatedAliases.push(item.cleaned);
+      }
+
+      db.ref(`master_db/${currentMergeCandidate.id}`).update({ aliases: updatedAliases }, () => {
+        mappedReceiptItems.push({
+          raw: item.raw,
+          cleaned: item.cleaned,
+          master: { ...currentMergeCandidate, aliases: updatedAliases }
+        });
+        currentUnmappedIndex++;
+        renderPart1CurrentItem();
+        renderPart2List();
+      });
+    }
+
+    function saveAndNextNewItem() {
+      const item = unmappedReceiptItems[currentUnmappedIndex];
+      const name = document.getElementById('part1-name-input').value.trim();
+      const location = document.getElementById('part1-location-select').value;
+      const shelf = location === 'fridge' ? '' : document.getElementById('part1-shelf-select').value;
+
+      if (!name) return;
+
+      const newMaster = {
+        name: name,
+        shelfDefault: shelf,
+        locationDefault: location,
+        aliases: [item.cleaned]
+      };
+
+      const newRef = db.ref("master_db").push(newMaster);
+      mappedReceiptItems.push({
+        raw: item.raw,
+        cleaned: item.cleaned,
+        master: { id: newRef.key, ...newMaster }
+      });
+
+      currentUnmappedIndex++;
+      renderPart1CurrentItem();
+      renderPart2List();
+    }
+
+    function renderPart2List() {
+      const list = document.getElementById('part2-items-list');
+      document.getElementById('part2-count').innerText = mappedReceiptItems.length;
+
+      if (mappedReceiptItems.length === 0) {
+        list.innerHTML = `<div class="text-xs text-gray-400 py-4 text-center">Nessun cibo pronto. Configura i cibi nuovi sopra.</div>`;
+        return;
+      }
+
+      list.innerHTML = mappedReceiptItems.map((item, idx) => {
+        const isFridge = item.master.locationDefault === 'fridge';
+        const shelfName = isFridge ? 'Frigo' : (item.master.locationDefault === 'freezer' ? freezerShelvesData[item.master.shelfDefault]?.name : pantryShelvesData[item.master.shelfDefault]?.name) || 'Generale';
+        return `
+          <div class="flex items-center justify-between p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
+            <div>
+              <div class="text-xs font-bold text-gray-800 dark:text-gray-100">${item.master.name}</div>
+              <div class="text-[10px] text-gray-400">📍 ${shelfName} • (${item.master.locationDefault || 'frigo'})</div>
+            </div>
+            <button onclick="editPart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function editPart2Item(idx) {
+      const removed = mappedReceiptItems.splice(idx, 1)[0];
+      unmappedReceiptItems.splice(currentUnmappedIndex, 0, { raw: removed.raw, cleaned: removed.cleaned });
+      renderPart1CurrentItem();
+      renderPart2List();
+    }
+
+    function addAllMassRecognizedItems() {
+      if (mappedReceiptItems.length === 0) {
+        alert("Nessun alimento pronto da inserire!");
+        return;
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+
+      mappedReceiptItems.forEach(item => {
+        const targetLoc = item.master.locationDefault || 'fridge';
+        const path = targetLoc === 'fridge' ? 'fridge_items' : (targetLoc === 'freezer' ? 'freezer_items' : 'pantry_items');
+
+        db.ref(path).push({
+          name: item.master.name,
+          shelf: targetLoc === 'fridge' ? '' : (item.master.shelfDefault || ''),
+          category: 'c1',
+          qty: 1,
+          entryDate: today,
+          expiryDate: '',
+          isOpenPiece: false
+        });
+      });
+
+      alert(`🚀 ${mappedReceiptItems.length} alimenti inseriti con successo nell'inventario!`);
+      closeModal('modal-receipt');
+    }
+  </script>
+</body>
+</html>
