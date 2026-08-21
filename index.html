@@ -437,6 +437,52 @@
         </div>
       </div>
 
+      <div class="space-y-4 bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider flex items-center gap-1.5">
+          <i data-lucide="calendar-days" class="w-4 h-4 text-purple-500"></i> 📅 Piano Pasti con AI Esterna
+        </h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          Genera un prompt pronto da incollare nel tuo assistente AI preferito (Claude, ChatGPT, ecc.): includerà gli ingredienti selezionati sopra, dando priorità a quelli in scadenza. L'app non chiama nessun servizio AI esterno da sola.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-2">
+          <select id="mealplan-days-select" class="flex-1 p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
+            <option value="1">Un giorno (pranzo e cena)</option>
+            <option value="2">Due giorni (pranzo e cena)</option>
+            <option value="7">Settimana intera (7 giorni, pranzo e cena)</option>
+          </select>
+          <button onclick="generateMealPlanPrompt()" class="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-sm transition shadow-sm flex items-center justify-center gap-2 whitespace-nowrap">
+            <i data-lucide="sparkles" class="w-4 h-4"></i> Genera Prompt
+          </button>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">🌱 Vincolo vegano</label>
+          <select id="mealplan-vegan-select" class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
+            <option value="none">Nessun vincolo</option>
+            <option value="dinner">Vegano solo a cena, pranzo libero</option>
+            <option value="all">Vegano sia a pranzo che a cena</option>
+          </select>
+        </div>
+
+        <div id="mealplan-prompt-area" class="hidden space-y-2">
+          <textarea id="mealplan-prompt-output" readonly rows="10" class="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-600 text-xs font-mono outline-none"></textarea>
+          <button id="mealplan-copy-btn" onclick="copyMealPlanPrompt()" class="w-full py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl text-sm transition flex items-center justify-center gap-2">
+            <i data-lucide="copy" class="w-4 h-4"></i> Copia Prompt
+          </button>
+        </div>
+
+        <div class="pt-2 border-t border-gray-100 dark:border-gray-700 space-y-2">
+          <label class="block text-xs font-semibold text-gray-500 uppercase">Incolla qui la risposta dell'AI per salvarla (sincronizzata su tutti i dispositivi)</label>
+          <textarea id="mealplan-response-input" rows="4" placeholder="Incolla qui il piano pasti generato dall'AI..." class="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none"></textarea>
+          <button onclick="saveMealPlanResponse()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition shadow-sm flex items-center justify-center gap-2">
+            <i data-lucide="save" class="w-4 h-4"></i> Salva Piano
+          </button>
+        </div>
+
+        <div id="mealplan-saved-container"></div>
+      </div>
+
       <div class="space-y-3 bg-amber-50/30 dark:bg-amber-950/10 p-4 rounded-3xl border border-amber-100 dark:border-amber-900/30">
         <h3 class="text-xs font-bold uppercase text-amber-700 dark:text-amber-400 tracking-wider px-1 flex items-center gap-2">
           <i data-lucide="book-marked" class="w-4 h-4 text-amber-500"></i> 📖 Le Mie Ricette Personalizzate
@@ -794,6 +840,7 @@
     
     let categoriesData = {};
     let recipesData = {};
+    let mealPlanData = null;
 
     let selectedFreezerShelf = 'all';
     let selectedPantryShelf = 'all';
@@ -882,9 +929,14 @@
         } else { categoriesData = val; renderAll(); }
       });
 
-      db.ref("fridge_recipes").on("value", (snapshot) => { 
-        recipesData = snapshot.val() || {}; 
-        renderRecipes(); 
+      db.ref("fridge_recipes").on("value", (snapshot) => {
+        recipesData = snapshot.val() || {};
+        renderRecipes();
+      });
+
+      db.ref("meal_plan").on("value", (snapshot) => {
+        mealPlanData = snapshot.val() || null;
+        renderMealPlan();
       });
     });
 
@@ -1793,6 +1845,128 @@
           </div>
         </div>
       `;
+    }
+
+    function getSoonestExpiryForIngredient(baseNameLower) {
+      const todayKey = getTodayKey();
+      let soonest = null;
+      [fridgeData, freezerData, pantryData].forEach(dataObj => {
+        Object.values(dataObj).forEach(item => {
+          if (!item.expiryDate || item.expiryDate < todayKey) return;
+          if (getBaseFoodName(item.name).toLowerCase() !== baseNameLower) return;
+          if (!soonest || item.expiryDate < soonest) soonest = item.expiryDate;
+        });
+      });
+      return soonest;
+    }
+
+    function generateMealPlanPrompt() {
+      const days = document.getElementById('mealplan-days-select').value;
+      const ingredients = Array.from(selectedAvailableIngredients).sort();
+
+      if (ingredients.length === 0) {
+        alert('Seleziona almeno un ingrediente disponibile qui sopra prima di generare il prompt.');
+        return;
+      }
+
+      const todayKey = getTodayKey();
+      const threeDaysKey = (() => {
+        const d = new Date(); d.setDate(d.getDate() + 3);
+        return d.toISOString().split('T')[0];
+      })();
+
+      const ingredientLines = ingredients.map(name => {
+        const soonest = getSoonestExpiryForIngredient(name.toLowerCase());
+        if (soonest && soonest <= threeDaysKey) return `- ${name} ⚠️ scade il ${soonest}`;
+        return `- ${name}`;
+      }).join('\n');
+
+      const veganMode = document.getElementById('mealplan-vegan-select').value;
+      let veganLine = '';
+      if (veganMode === 'dinner') veganLine = '\n- La cena deve essere sempre vegana (nessun prodotto di origine animale); il pranzo può essere libero.';
+      else if (veganMode === 'all') veganLine = '\n- Tutte le ricette, sia a pranzo che a cena, devono essere 100% vegane (nessun prodotto di origine animale).';
+
+      const prompt = `Sono in cucina e voglio ridurre gli sprechi alimentari. Crea per me un piano pasti di ${days} giorno/i (pranzo e cena per ogni giorno) usando PRIORITARIAMENTE questi ingredienti che ho già disponibili in frigo, freezer e dispensa:
+
+${ingredientLines}
+
+Regole da seguire:
+- Dai la massima priorità agli ingredienti segnati con ⚠️ (scadono a breve).
+- Puoi aggiungere pochi ingredienti extra comuni ed economici se necessario, ma elencali chiaramente in una lista "Da comprare" per ogni ricetta.
+- Varia il più possibile i piatti, evitando ripetizioni nello stesso piano.${veganLine}
+- Per ogni pasto indica: nome del piatto, ingredienti usati (con quantità indicative), procedimento breve (max 5 passaggi).
+- Alla fine del piano aggiungi un riepilogo con la lista della spesa complessiva di tutto ciò che manca.
+
+Rispondi in italiano, organizzato per "Giorno 1", "Giorno 2", ecc., con le sezioni "Pranzo" e "Cena" per ciascun giorno.`;
+
+      document.getElementById('mealplan-prompt-output').value = prompt;
+      document.getElementById('mealplan-prompt-area').classList.remove('hidden');
+    }
+
+    function copyMealPlanPrompt() {
+      const ta = document.getElementById('mealplan-prompt-output');
+      const btn = document.getElementById('mealplan-copy-btn');
+      const showCopied = () => {
+        if (!btn) return;
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Copiato!';
+        lucide.createIcons();
+        setTimeout(() => { btn.innerHTML = original; lucide.createIcons(); }, 1800);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ta.value).then(showCopied).catch(() => {
+          ta.select();
+          document.execCommand('copy');
+          showCopied();
+        });
+      } else {
+        ta.select();
+        document.execCommand('copy');
+        showCopied();
+      }
+    }
+
+    function saveMealPlanResponse() {
+      const text = document.getElementById('mealplan-response-input').value.trim();
+      if (!text) return;
+      const days = document.getElementById('mealplan-days-select').value;
+      db.ref('meal_plan').set({ text, days, savedAt: new Date().toISOString() }, (err) => {
+        if (!err) document.getElementById('mealplan-response-input').value = '';
+      });
+    }
+
+    function deleteMealPlan() {
+      if (confirm('Eliminare il piano pasti salvato?')) {
+        db.ref('meal_plan').remove();
+      }
+    }
+
+    function escapeHtmlForPlan(str) {
+      return (str || '').toString()
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function renderMealPlan() {
+      const container = document.getElementById('mealplan-saved-container');
+      if (!container) return;
+      if (!mealPlanData || !mealPlanData.text) {
+        container.innerHTML = '';
+        return;
+      }
+      const savedDate = mealPlanData.savedAt ? new Date(mealPlanData.savedAt).toLocaleString('it-IT') : '';
+      container.innerHTML = `
+        <div class="p-4 bg-purple-50/50 dark:bg-purple-950/20 rounded-2xl border border-purple-100 dark:border-purple-900/30 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <h4 class="text-xs font-bold uppercase text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
+              <i data-lucide="calendar-check" class="w-4 h-4"></i> Piano Pasti Salvato
+              ${savedDate ? `<span class="font-normal normal-case text-gray-400">· ${savedDate}</span>` : ''}
+            </h4>
+            <button onclick="deleteMealPlan()" title="Elimina Piano" class="p-1.5 text-gray-400 hover:text-red-500 flex-shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+          <div class="text-xs text-gray-700 dark:text-gray-200 whitespace-pre-wrap">${escapeHtmlForPlan(mealPlanData.text)}</div>
+        </div>
+      `;
+      lucide.createIcons();
     }
 
     function openShelvesModal() { document.getElementById('modal-shelves').classList.remove('hidden'); renderShelvesManageList(); }
