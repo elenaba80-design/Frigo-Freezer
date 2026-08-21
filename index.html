@@ -1892,12 +1892,30 @@ ${ingredientLines}
 
 Regole da seguire:
 - Dai la massima priorità agli ingredienti segnati con ⚠️ (scadono a breve).
-- Puoi aggiungere pochi ingredienti extra comuni ed economici se necessario, ma elencali chiaramente in una lista "Da comprare" per ogni ricetta.
+- Puoi aggiungere pochi ingredienti extra comuni ed economici se necessario, ma elencali chiaramente nella riga "Da comprare" di ogni pasto.
 - Varia il più possibile i piatti, evitando ripetizioni nello stesso piano.${veganLine}
-- Per ogni pasto indica: nome del piatto, ingredienti usati (con quantità indicative), procedimento breve (max 5 passaggi).
+- Per ogni pasto indica: nome del piatto, ingredienti usati (con quantità indicative), procedimento breve (max 5 passaggi), e cosa manca da comprare.
 - Alla fine del piano aggiungi un riepilogo con la lista della spesa complessiva di tutto ciò che manca.
 
-Rispondi in italiano, organizzato per "Giorno 1", "Giorno 2", ecc., con le sezioni "Pranzo" e "Cena" per ciascun giorno.`;
+IMPORTANTE - Formato della risposta: scrivi in TESTO SEMPLICE, senza markdown (niente **, ##, _, tabelle o elenchi puntati con simboli speciali). Usa esattamente questo schema, ripetuto per ogni giorno, con una riga vuota tra un pasto e l'altro:
+
+GIORNO 1
+PRANZO: Nome del piatto
+Ingredienti: elenco separato da virgole
+Procedimento: passaggi brevi separati da " - "
+Da comprare: elenco o "nessuno"
+
+CENA: Nome del piatto
+Ingredienti: elenco separato da virgole
+Procedimento: passaggi brevi separati da " - "
+Da comprare: elenco o "nessuno"
+
+(ripeti per ogni giorno del piano)
+
+Alla fine, chiudi con:
+LISTA DELLA SPESA COMPLETA: elenco unico di tutto ciò che manca in totale
+
+Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.`;
 
       document.getElementById('mealplan-prompt-output').value = prompt;
       document.getElementById('mealplan-prompt-area').classList.remove('hidden');
@@ -1946,6 +1964,25 @@ Rispondi in italiano, organizzato per "Giorno 1", "Giorno 2", ecc., con le sezio
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
+    function formatMealPlanHtml(rawText) {
+      const lines = (rawText || '').toString().replace(/\*\*/g, '').split('\n');
+      return lines.map(rawLine => {
+        const line = escapeHtmlForPlan(rawLine);
+        const trimmed = rawLine.trim();
+        if (/^GIORNO\s+\d+/i.test(trimmed)) {
+          return `<div class="mt-3 first:mt-0 pt-2 first:pt-0 border-t first:border-t-0 border-purple-100 dark:border-purple-900/30 font-bold text-sm text-purple-700 dark:text-purple-400">${line}</div>`;
+        }
+        if (/^(PRANZO|CENA)\s*:/i.test(trimmed)) {
+          return `<div class="mt-2 font-bold text-gray-800 dark:text-gray-100">${line}</div>`;
+        }
+        if (/^(LISTA DELLA SPESA|DA COMPRARE)/i.test(trimmed)) {
+          return `<div class="mt-1 font-semibold text-amber-700 dark:text-amber-400">${line}</div>`;
+        }
+        if (trimmed === '') return '<div class="h-2"></div>';
+        return `<div>${line}</div>`;
+      }).join('');
+    }
+
     function renderMealPlan() {
       const container = document.getElementById('mealplan-saved-container');
       if (!container) return;
@@ -1963,7 +2000,7 @@ Rispondi in italiano, organizzato per "Giorno 1", "Giorno 2", ecc., con le sezio
             </h4>
             <button onclick="deleteMealPlan()" title="Elimina Piano" class="p-1.5 text-gray-400 hover:text-red-500 flex-shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
-          <div class="text-xs text-gray-700 dark:text-gray-200 whitespace-pre-wrap">${escapeHtmlForPlan(mealPlanData.text)}</div>
+          <div class="text-xs text-gray-700 dark:text-gray-200">${formatMealPlanHtml(mealPlanData.text)}</div>
         </div>
       `;
       lucide.createIcons();
