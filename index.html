@@ -396,7 +396,11 @@
             <input type="text" id="recipe-ingredients-input" required placeholder="Es. Ceci, Limone, Olio, Aglio, Tahina" class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Link Ricetta / Procedimento (opzionale)</label>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Procedimento (opzionale)</label>
+            <textarea id="recipe-procedure-input" rows="3" placeholder="Es. Frulla i ceci con tahina e limone - Aggiungi olio a filo - Servi con paprika" class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Link Ricetta (opzionale)</label>
             <input type="url" id="recipe-link-input" placeholder="Es. https://www.esempio.it/ricetta" class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
           </div>
           <div class="flex items-center gap-2 pt-1">
@@ -435,6 +439,13 @@
           </div>
           <div id="recipe-ingredients-selector" class="flex flex-wrap gap-2 pt-1 max-h-36 overflow-y-auto"></div>
         </div>
+      </div>
+
+      <div class="space-y-3 bg-amber-50/30 dark:bg-amber-950/10 p-4 rounded-3xl border border-amber-100 dark:border-amber-900/30">
+        <h3 class="text-xs font-bold uppercase text-amber-700 dark:text-amber-400 tracking-wider px-1 flex items-center gap-2">
+          <i data-lucide="book-marked" class="w-4 h-4 text-amber-500"></i> 📖 Le Mie Ricette Personalizzate
+        </h3>
+        <div id="my-recipes-container" class="space-y-3"></div>
       </div>
 
       <div class="space-y-4 bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -481,13 +492,6 @@
         </div>
 
         <div id="mealplan-saved-container"></div>
-      </div>
-
-      <div class="space-y-3 bg-amber-50/30 dark:bg-amber-950/10 p-4 rounded-3xl border border-amber-100 dark:border-amber-900/30">
-        <h3 class="text-xs font-bold uppercase text-amber-700 dark:text-amber-400 tracking-wider px-1 flex items-center gap-2">
-          <i data-lucide="book-marked" class="w-4 h-4 text-amber-500"></i> 📖 Le Mie Ricette Personalizzate
-        </h3>
-        <div id="my-recipes-container" class="space-y-3"></div>
       </div>
 
       <div class="space-y-3 bg-teal-50/30 dark:bg-teal-950/10 p-4 rounded-3xl border border-teal-100 dark:border-teal-900/30">
@@ -616,6 +620,10 @@
         <div>
           <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ingredienti * (separati da virgola)</label>
           <input type="text" id="edit-recipe-ingredients" required class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Procedimento (opzionale)</label>
+          <textarea id="edit-recipe-procedure" rows="3" class="w-full p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm outline-none"></textarea>
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Link Ricetta (opzionale)</label>
@@ -841,6 +849,7 @@
     let categoriesData = {};
     let recipesData = {};
     let mealPlanData = null;
+    let mealPlanParsedMeals = [];
 
     let selectedFreezerShelf = 'all';
     let selectedPantryShelf = 'all';
@@ -1665,6 +1674,7 @@
       e.preventDefault();
       const title = document.getElementById('recipe-title-input').value.trim();
       const ingredientsRaw = document.getElementById('recipe-ingredients-input').value;
+      const procedure = document.getElementById('recipe-procedure-input').value.trim();
       const link = document.getElementById('recipe-link-input').value.trim();
       const isVegan = document.getElementById('recipe-is-vegan-input').checked;
 
@@ -1672,10 +1682,11 @@
 
       if (!title || ingredients.length === 0) return;
 
-      db.ref("fridge_recipes").push({ title, ingredients, link, isVegan }, (err) => {
+      db.ref("fridge_recipes").push({ title, ingredients, procedure, link, isVegan }, (err) => {
         if (!err) {
           document.getElementById('recipe-title-input').value = '';
           document.getElementById('recipe-ingredients-input').value = '';
+          document.getElementById('recipe-procedure-input').value = '';
           document.getElementById('recipe-link-input').value = '';
           document.getElementById('recipe-is-vegan-input').checked = false;
           toggleAddRecipeForm();
@@ -1695,6 +1706,7 @@
       document.getElementById('edit-recipe-id').value = id;
       document.getElementById('edit-recipe-title').value = rec.title;
       document.getElementById('edit-recipe-ingredients').value = Array.isArray(rec.ingredients) ? rec.ingredients.join(', ') : rec.ingredients;
+      document.getElementById('edit-recipe-procedure').value = rec.procedure || '';
       document.getElementById('edit-recipe-link').value = rec.link || '';
       document.getElementById('edit-recipe-is-vegan').checked = !!rec.isVegan;
       document.getElementById('modal-edit-recipe').classList.remove('hidden');
@@ -1705,11 +1717,12 @@
       const id = document.getElementById('edit-recipe-id').value;
       const title = document.getElementById('edit-recipe-title').value.trim();
       const ingredientsRaw = document.getElementById('edit-recipe-ingredients').value;
+      const procedure = document.getElementById('edit-recipe-procedure').value.trim();
       const link = document.getElementById('edit-recipe-link').value.trim();
       const isVegan = document.getElementById('edit-recipe-is-vegan').checked;
       const ingredients = ingredientsRaw.split(',').map(i => i.trim()).filter(i => i.length > 0);
 
-      db.ref(`fridge_recipes/${id}`).update({ title, ingredients, link, isVegan }, () => {
+      db.ref(`fridge_recipes/${id}`).update({ title, ingredients, procedure, link, isVegan }, () => {
         closeModal('modal-edit-recipe');
       });
     }
@@ -1824,6 +1837,7 @@
                 ${rec.isVegan ? `<span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 px-1.5 py-0.5 rounded-md">🌱 VEGAN</span>` : ''}
               </div>
               <p class="text-xs text-gray-500 mt-1"><strong>Ingredienti:</strong> ${ingList.join(', ')}</p>
+              ${rec.procedure ? `<p class="text-xs text-gray-500 mt-1"><strong>Procedimento:</strong> ${rec.procedure}</p>` : ''}
             </div>
             ${isCustom ? `
               <div class="flex items-center gap-1">
@@ -1948,7 +1962,8 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       const text = document.getElementById('mealplan-response-input').value.trim();
       if (!text) return;
       const days = document.getElementById('mealplan-days-select').value;
-      db.ref('meal_plan').set({ text, days, savedAt: new Date().toISOString() }, (err) => {
+      const veganMode = document.getElementById('mealplan-vegan-select').value;
+      db.ref('meal_plan').set({ text, days, veganMode, savedAt: new Date().toISOString() }, (err) => {
         if (!err) document.getElementById('mealplan-response-input').value = '';
       });
     }
@@ -1964,23 +1979,118 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    function formatMealPlanHtml(rawText) {
+    function parseMealPlanText(rawText) {
       const lines = (rawText || '').toString().replace(/\*\*/g, '').split('\n');
-      return lines.map(rawLine => {
+      const meals = [];
+      let current = null;
+      let currentDay = null;
+      const pushCurrent = () => {
+        if (current && current.title) meals.push(current);
+        current = null;
+      };
+      lines.forEach(rawLine => {
+        const trimmed = rawLine.trim();
+        const dayMatch = trimmed.match(/^GIORNO\s+(\d+)/i);
+        if (dayMatch) { pushCurrent(); currentDay = parseInt(dayMatch[1]); return; }
+
+        const mealMatch = trimmed.match(/^(PRANZO|CENA)\s*:\s*(.+)/i);
+        if (mealMatch) {
+          pushCurrent();
+          current = { day: currentDay, mealType: mealMatch[1].toUpperCase(), title: mealMatch[2].trim(), ingredients: [], procedure: '' };
+          return;
+        }
+
+        if (/^LISTA DELLA SPESA/i.test(trimmed)) { pushCurrent(); return; }
+        if (trimmed === '') { pushCurrent(); return; }
+        if (!current) return;
+
+        const ingMatch = trimmed.match(/^Ingredienti\s*:\s*(.+)/i);
+        if (ingMatch) {
+          current.ingredients = ingMatch[1].split(',').map(s => s.trim()).filter(Boolean);
+          return;
+        }
+
+        const procMatch = trimmed.match(/^Procedimento\s*:\s*(.+)/i);
+        if (procMatch) {
+          current.procedure = procMatch[1].trim();
+        }
+      });
+      pushCurrent();
+      return meals;
+    }
+
+    function formatMealPlanHtml(rawText) {
+      mealPlanParsedMeals = parseMealPlanText(rawText);
+      const lines = (rawText || '').toString().replace(/\*\*/g, '').split('\n');
+      let html = '';
+      let mealIndex = -1;
+      let mealOpen = false;
+
+      const closeMealIfOpen = () => {
+        if (mealOpen) {
+          const meal = mealPlanParsedMeals[mealIndex];
+          if (meal && meal.ingredients.length > 0) {
+            html += `<button onclick="addMealPlanRecipeToMyRecipes(${mealIndex})" title="Aggiungi alle mie ricette" class="mt-1 mb-1 w-8 h-8 flex items-center justify-center rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"><i data-lucide="plus" class="w-5 h-5"></i></button>`;
+          }
+        }
+        mealOpen = false;
+      };
+
+      lines.forEach(rawLine => {
         const line = escapeHtmlForPlan(rawLine);
         const trimmed = rawLine.trim();
+
         if (/^GIORNO\s+\d+/i.test(trimmed)) {
-          return `<div class="mt-3 first:mt-0 pt-2 first:pt-0 border-t first:border-t-0 border-purple-100 dark:border-purple-900/30 font-bold text-sm text-purple-700 dark:text-purple-400">${line}</div>`;
+          closeMealIfOpen();
+          html += `<div class="mt-3 first:mt-0 pt-2 first:pt-0 border-t first:border-t-0 border-purple-100 dark:border-purple-900/30 font-bold text-sm text-purple-700 dark:text-purple-400">${line}</div>`;
+          return;
         }
         if (/^(PRANZO|CENA)\s*:/i.test(trimmed)) {
-          return `<div class="mt-2 font-bold text-gray-800 dark:text-gray-100">${line}</div>`;
+          closeMealIfOpen();
+          mealIndex++;
+          mealOpen = true;
+          html += `<div class="mt-2 font-bold text-gray-800 dark:text-gray-100">${line}</div>`;
+          return;
         }
-        if (/^(LISTA DELLA SPESA|DA COMPRARE)/i.test(trimmed)) {
-          return `<div class="mt-1 font-semibold text-amber-700 dark:text-amber-400">${line}</div>`;
+        if (/^LISTA DELLA SPESA/i.test(trimmed)) {
+          closeMealIfOpen();
+          html += `<div class="mt-1 font-semibold text-amber-700 dark:text-amber-400">${line}</div>`;
+          return;
         }
-        if (trimmed === '') return '<div class="h-2"></div>';
-        return `<div>${line}</div>`;
-      }).join('');
+        if (/^Da comprare\s*:/i.test(trimmed)) {
+          html += `<div class="mt-0.5 font-semibold text-amber-700 dark:text-amber-400">${line}</div>`;
+          return;
+        }
+        if (trimmed === '') {
+          closeMealIfOpen();
+          html += '<div class="h-2"></div>';
+          return;
+        }
+        html += `<div>${line}</div>`;
+      });
+      closeMealIfOpen();
+      return html;
+    }
+
+    function addMealPlanRecipeToMyRecipes(index) {
+      const meal = mealPlanParsedMeals[index];
+      if (!meal || !meal.title || meal.ingredients.length === 0) return;
+
+      const veganMode = mealPlanData && mealPlanData.veganMode;
+      const isVegan = veganMode === 'all' || (veganMode === 'dinner' && meal.mealType === 'CENA');
+
+      db.ref('fridge_recipes').push({ title: meal.title, ingredients: meal.ingredients, procedure: meal.procedure || '', link: '', isVegan: !!isVegan }, (err) => {
+        if (err) return;
+        const btn = document.querySelector(`#mealplan-saved-container button[onclick="addMealPlanRecipeToMyRecipes(${index})"]`);
+        if (btn) {
+          btn.title = 'Aggiunta alle mie ricette';
+          btn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i>';
+          btn.disabled = true;
+          btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+          btn.classList.add('bg-gray-300', 'dark:bg-gray-600', 'cursor-default');
+          lucide.createIcons();
+        }
+      });
     }
 
     function renderMealPlan() {
