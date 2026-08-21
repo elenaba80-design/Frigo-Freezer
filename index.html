@@ -44,10 +44,6 @@
         🧪 Modalità Test
       </label>
       <div class="flex gap-2">
-        <button onclick="openReceiptModal()" title="Importa Scontrino" class="p-2.5 bg-emerald-600 text-white rounded-xl shadow-sm hover:bg-emerald-700 transition flex items-center gap-1 text-xs font-bold">
-          <i data-lucide="receipt" class="w-5 h-5"></i>
-          <span class="hidden sm:inline">Importa Scontrino</span>
-        </button>
         <button onclick="openShelvesModal()" title="Gestisci Ripiani" class="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
           <i data-lucide="layers" class="w-5 h-5"></i>
         </button>
@@ -139,7 +135,14 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-4 gap-2">
+      <div class="grid grid-cols-5 gap-2">
+        <button onclick="openReceiptModal()" class="flex flex-col items-center justify-center gap-1 aspect-square bg-white dark:bg-gray-800 p-2 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
+          <div class="p-2 bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400 rounded-2xl">
+            <i data-lucide="receipt" class="w-7 h-7"></i>
+          </div>
+          <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200 text-center leading-tight">Importa<br>Scontrino</span>
+        </button>
+
         <button onclick="switchTab('shopping')" class="relative flex flex-col items-center justify-center gap-1 aspect-square bg-white dark:bg-gray-800 p-2 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
           <span class="absolute top-1.5 right-1.5 text-[9px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800"><span id="home-shopping-count">0</span></span>
           <div class="p-2 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-2xl">
@@ -611,6 +614,21 @@
         <input type="text" id="quick-remove-search" oninput="renderQuickRemoveListIfOpen()" placeholder="Cerca alimento..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-sm focus:ring-2 focus:ring-red-500 outline-none">
       </div>
       <div id="quick-remove-list" class="space-y-2 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <div id="modal-confirm-delete" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-5 space-y-4 border border-gray-100 dark:border-gray-700 shadow-xl">
+      <div class="flex items-center gap-2">
+        <i data-lucide="trash-2" class="w-5 h-5 text-red-500"></i>
+        <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100">Rimuovere alimento?</h3>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-300">Cosa vuoi fare con <strong id="confirm-delete-name"></strong>?</p>
+      <div class="flex flex-col gap-2">
+        <button onclick="confirmDeleteItem(true)" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition shadow-sm">Elimina e Aggiungi alla Spesa</button>
+        <button onclick="confirmDeleteItem(false)" class="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-sm transition shadow-sm">Elimina</button>
+        <button onclick="cancelDeleteItem()" class="w-full py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl text-sm transition">Annulla</button>
+      </div>
     </div>
   </div>
 
@@ -1145,19 +1163,38 @@
       }
     }
 
+    let pendingDeleteItem = null;
+
     function deleteFoodItem(id, loc) {
       const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
       if (!source) return;
 
-      if (confirm("Vuoi davvero rimuovere questo alimento dal database?")) {
-        if (confirm("L'hai finito? Vuoi aggiungerlo alla Lista della Spesa?")) {
-          const foodName = getBaseFoodName(source.name);
-          db.ref("shopping_items").push({ name: foodName, addedAt: new Date().toISOString() });
-        }
-        
-        const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
-        db.ref(`${path}/${id}`).remove();
+      pendingDeleteItem = { id, loc, name: getBaseFoodName(source.name) };
+      document.getElementById('confirm-delete-name').textContent = pendingDeleteItem.name;
+      document.getElementById('modal-confirm-delete').classList.remove('hidden');
+    }
+
+    function cancelDeleteItem() {
+      pendingDeleteItem = null;
+      closeModal('modal-confirm-delete');
+    }
+
+    function confirmDeleteItem(addToShoppingList) {
+      if (!pendingDeleteItem) return;
+      const { id, loc, name } = pendingDeleteItem;
+
+      if (addToShoppingList) {
+        db.ref("shopping_items").push({ name, addedAt: new Date().toISOString() });
       }
+
+      const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
+      db.ref(`${path}/${id}`).remove(() => {
+        pendingDeleteItem = null;
+        closeModal('modal-confirm-delete');
+        if (!document.getElementById('modal-quick-remove').classList.contains('hidden')) {
+          closeQuickRemoveModal();
+        }
+      });
     }
 
     function handleManualAddShopping(e) {
