@@ -27,7 +27,7 @@
 
   <div class="max-w-6xl mx-auto min-h-screen flex flex-col px-4 py-4">
 
-    <header class="flex justify-between items-center mb-4 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <header id="app-header" class="flex justify-between items-center mb-4 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
       <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('home')">
         <div class="p-2.5 bg-emerald-50 dark:bg-emerald-900/40 rounded-xl text-emerald-600 dark:text-emerald-400">
           <i data-lucide="thermometer-snowflake" class="w-6 h-6"></i>
@@ -57,29 +57,56 @@
       </div>
     </header>
 
-    <nav id="main-nav-tabs" class="hidden flex bg-gray-200/60 dark:bg-gray-800/80 p-1 rounded-xl mb-4 text-xs font-semibold overflow-x-auto gap-1">
-      <button id="tab-btn-home" onclick="switchTab('home')" class="flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all bg-white dark:bg-gray-700 shadow-sm text-emerald-600 dark:text-emerald-400 font-bold">
-        🏠 Home
+    <div id="global-nav-grid" class="hidden flex flex-wrap justify-center gap-1.5 mb-4 max-w-4xl mx-auto w-full">
+      <button onclick="switchTab('home')" class="flex flex-col items-center justify-center gap-0 w-14 h-14 flex-shrink-0 bg-white dark:bg-gray-800 p-0.5 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
+        <div class="p-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-md">
+          <i data-lucide="home" class="w-6 h-6"></i>
+        </div>
+        <span class="text-[7px] font-bold text-gray-700 dark:text-gray-200 leading-none">Home</span>
       </button>
-      <button id="tab-btn-fridge" onclick="switchTab('fridge')" class="flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-        🥗 Frigo (<span id="fridge-count-nav">0</span>)
+
+      <button onclick="switchTab('fridge')" class="flex flex-col items-center justify-center gap-0 w-14 h-14 flex-shrink-0 bg-emerald-50 dark:bg-emerald-950/20 p-0.5 rounded-lg border border-emerald-100 dark:border-emerald-900/30 shadow-sm hover:shadow-md active:scale-95 transition-all">
+        <div class="p-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-md">
+          <i data-lucide="salad" class="w-6 h-6"></i>
+        </div>
+        <span class="text-[7px] font-bold text-gray-700 dark:text-gray-200 leading-none">Frigo</span>
       </button>
-      <button id="tab-btn-freezer" onclick="switchTab('freezer')" class="flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-        ❄️ Freezer (<span id="freezer-count-nav">0</span>)
+
+      <button onclick="switchTab('freezer')" class="flex flex-col items-center justify-center gap-0 w-14 h-14 flex-shrink-0 bg-cyan-50 dark:bg-cyan-950/20 p-0.5 rounded-lg border border-cyan-100 dark:border-cyan-900/30 shadow-sm hover:shadow-md active:scale-95 transition-all">
+        <div class="p-1 bg-cyan-100 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400 rounded-md">
+          <i data-lucide="snowflake" class="w-6 h-6"></i>
+        </div>
+        <span class="text-[7px] font-bold text-gray-700 dark:text-gray-200 leading-none">Freezer</span>
       </button>
-      <button id="tab-btn-pantry" onclick="switchTab('pantry')" class="flex-1 min-w-[80px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-        🗄️ Dispensa (<span id="pantry-count-nav">0</span>)
+
+      <button onclick="switchTab('pantry')" class="flex flex-col items-center justify-center gap-0 w-14 h-14 flex-shrink-0 bg-indigo-50 dark:bg-indigo-950/20 p-0.5 rounded-lg border border-indigo-100 dark:border-indigo-900/30 shadow-sm hover:shadow-md active:scale-95 transition-all">
+        <div class="p-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-md">
+          <i data-lucide="package" class="w-6 h-6"></i>
+        </div>
+        <span class="text-[7px] font-bold text-gray-700 dark:text-gray-200 leading-none">Dispensa</span>
       </button>
-      <button id="tab-btn-shopping" onclick="switchTab('shopping')" class="flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-bold text-indigo-600 dark:text-indigo-400">
-        🛒 Spesa (<span id="shopping-count-nav">0</span>)
+
+      <button onclick="switchTab('shopping')" class="flex flex-col items-center justify-center gap-0 w-14 h-14 flex-shrink-0 bg-white dark:bg-gray-800 p-0.5 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
+        <div class="p-1 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-md">
+          <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+        </div>
+        <span class="text-[7px] font-bold text-gray-700 dark:text-gray-200 leading-none">Spesa</span>
       </button>
-      <button id="tab-btn-add" onclick="switchTab('add')" class="flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-        ➕ Aggiungi
+
+      <button onclick="switchTab('add')" class="flex flex-col items-center justify-center gap-0 w-14 h-14 flex-shrink-0 bg-white dark:bg-gray-800 p-0.5 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
+        <div class="p-1 bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 rounded-md">
+          <i data-lucide="plus-circle" class="w-6 h-6"></i>
+        </div>
+        <span class="text-[7px] font-bold text-gray-700 dark:text-gray-200 leading-none">Aggiungi</span>
       </button>
-      <button id="tab-btn-recipes" onclick="switchTab('recipes')" class="flex-1 min-w-[80px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-        🍳 Ricette
+
+      <button onclick="switchTab('recipes')" class="flex flex-col items-center justify-center gap-0 w-14 h-14 flex-shrink-0 bg-white dark:bg-gray-800 p-0.5 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
+        <div class="p-1 bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 rounded-md">
+          <i data-lucide="utensils" class="w-6 h-6"></i>
+        </div>
+        <span class="text-[7px] font-bold text-gray-700 dark:text-gray-200 leading-none">Ricette</span>
       </button>
-    </nav>
+    </div>
 
     <section id="tab-home" class="space-y-4 max-w-4xl mx-auto w-full">
       <div class="grid grid-cols-3 gap-2">
@@ -932,23 +959,12 @@
 
     function switchTab(tabId) {
       activeTab = tabId;
-      document.getElementById('main-nav-tabs').classList.toggle('hidden', tabId === 'home');
+      document.getElementById('app-header').classList.toggle('hidden', tabId !== 'home');
+      document.getElementById('global-nav-grid').classList.toggle('hidden', tabId === 'home');
       ['home', 'fridge', 'freezer', 'pantry', 'shopping', 'add', 'recipes'].forEach(t => {
         const section = document.getElementById(`tab-${t}`);
-        const btn = document.getElementById(`tab-btn-${t}`);
-        if (!section || !btn) return;
-        
-        if (t === tabId) {
-          section.classList.remove('hidden');
-          if(tabId === 'shopping') {
-            btn.className = "flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all bg-white dark:bg-gray-700 shadow-sm text-indigo-600 dark:text-indigo-400 font-bold";
-          } else {
-            btn.className = "flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all bg-white dark:bg-gray-700 shadow-sm text-emerald-600 dark:text-emerald-400 font-bold";
-          }
-        } else {
-          section.classList.add('hidden');
-          btn.className = "flex-1 min-w-[70px] py-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300";
-        }
+        if (!section) return;
+        section.classList.toggle('hidden', t !== tabId);
       });
       lucide.createIcons();
     }
@@ -1034,12 +1050,8 @@
       const shoppingCount = Object.keys(shoppingData).length;
 
       document.getElementById('home-fridge-count').innerText = fridgeCount;
-      document.getElementById('fridge-count-nav').innerText = fridgeCount;
       document.getElementById('home-freezer-count').innerText = freezerCount;
-      document.getElementById('freezer-count-nav').innerText = freezerCount;
       document.getElementById('home-pantry-count').innerText = pantryCount;
-      document.getElementById('pantry-count-nav').innerText = pantryCount;
-      document.getElementById('shopping-count-nav').innerText = shoppingCount;
       document.getElementById('home-shopping-count').innerText = shoppingCount;
 
       const todayKey = getTodayKey();
