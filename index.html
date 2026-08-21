@@ -15,6 +15,9 @@
   <script>
     tailwind.config = { darkMode: 'media' }
   </script>
+  <style>
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  </style>
 </head>
 <body class="h-full text-gray-800 dark:text-gray-100 font-sans pb-28 md:pb-12">
 
@@ -1410,17 +1413,17 @@
         }
         
         listContainer.innerHTML += `
-          <div class="${cardBgClass} p-3 rounded-2xl border shadow-sm flex items-center justify-between gap-3 transition-all">
+          <div class="${cardBgClass} p-3 rounded-2xl border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 transition-all">
             <div class="flex items-center gap-3 min-w-0">
               <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="toggleBulkItemSelection('${item.id}', '${locCode}', event)" class="w-4 h-4 rounded text-emerald-600 accent-emerald-600 cursor-pointer flex-shrink-0">
               <div class="w-10 h-10 flex-shrink-0 rounded-xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-xl overflow-hidden cursor-pointer" onclick="${item.photo ? `openLightbox('${item.photo}')` : ''}">
                 ${item.photo ? `<img src="${item.photo}" class="w-full h-full object-cover">` : getCategoryIconHtml(cat)}
               </div>
               <div class="min-w-0">
-                <h4 class="font-bold text-sm leading-snug flex items-center gap-1.5 truncate">
-                  <span class="truncate">${item.name}</span>
-                  ${expired ? `<span class="bg-red-200 text-red-800 dark:bg-red-900/60 dark:text-red-200 text-[9px] px-1.5 py-0.5 rounded-full font-bold">SCADUTO</span>` : ''}
-                  ${!expired && item.isOpenPiece ? `<span class="bg-amber-200 text-amber-800 text-[9px] px-1.5 py-0.5 rounded-full font-bold">APERTO</span>` : ''}
+                <h4 class="font-bold text-sm leading-snug flex items-center gap-1.5 min-w-0">
+                  <span class="truncate min-w-0">${item.name}</span>
+                  ${expired ? `<span class="bg-red-200 text-red-800 dark:bg-red-900/60 dark:text-red-200 text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">SCADUTO</span>` : ''}
+                  ${!expired && item.isOpenPiece ? `<span class="bg-amber-200 text-amber-800 text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">APERTO</span>` : ''}
                 </h4>
                 <div class="text-[11px] text-gray-400 flex items-center gap-2">
                   ${hasShelves ? `<span>📍 ${shelfName}</span> • ` : ''}<span>Qtà: ${item.qty || 1}</span>
@@ -1428,7 +1431,7 @@
                 ${item.expiryDate ? `<span class="text-[10px] font-semibold ${expired ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}">${expired ? 'Scaduto il' : 'Scade:'} ${item.expiryDate}</span>` : ''}
               </div>
             </div>
-            <div class="flex items-center gap-1 flex-shrink-0">
+            <div class="flex items-center gap-1 flex-shrink-0 justify-end">
               <button onclick="addToShoppingList('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-indigo-500" title="Aggiungi alla Spesa"><i data-lucide="shopping-cart" class="w-4 h-4"></i></button>
               ${item.isOpenPiece 
                 ? `<button onclick="closeItemPiece('${item.id}', '${locCode}')" class="p-2 text-gray-400 hover:text-${colorClass}-600" title="Richiudi"><i data-lucide="package" class="w-4 h-4"></i></button>`
