@@ -1434,10 +1434,10 @@
     }
 
     function handleSearch(type) {
-      if (type === 'fridge') fridgeSearchQuery = document.getElementById('fridge-search-input').value;
-      else if (type === 'freezer') freezerSearchQuery = document.getElementById('freezer-search-input').value;
-      else pantrySearchQuery = document.getElementById('pantry-search-input').value;
-      renderAll();
+      if (type === 'fridge') { fridgeSearchQuery = document.getElementById('fridge-search-input').value; renderFridgeList(); }
+      else if (type === 'freezer') { freezerSearchQuery = document.getElementById('freezer-search-input').value; renderFreezerList(); }
+      else { pantrySearchQuery = document.getElementById('pantry-search-input').value; renderPantryList(); }
+      lucide.createIcons();
     }
 
     function renderAddDropdowns() {
