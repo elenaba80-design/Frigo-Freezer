@@ -368,7 +368,7 @@
       <div class="bg-gradient-to-r from-amber-500 to-orange-600 text-white p-5 rounded-2xl shadow-md space-y-2">
         <div class="flex items-center justify-between">
           <h2 class="font-bold text-lg flex items-center gap-2">
-            <i data-lucide="utensils" class="w-5 h-5"></i> Ricette & Proposte AI Svuota-Tutto
+            <i data-lucide="utensils" class="w-5 h-5"></i> Le Mie Ricette
           </h2>
           <button onclick="toggleAddRecipeForm()" class="text-xs font-bold bg-white text-orange-700 hover:bg-amber-50 px-3 py-2 rounded-xl transition flex items-center gap-1 shadow-sm">
             <i data-lucide="plus-circle" class="w-4 h-4"></i> Nuova Ricetta
@@ -492,13 +492,6 @@
         </div>
 
         <div id="mealplan-saved-container"></div>
-      </div>
-
-      <div class="space-y-3 bg-teal-50/30 dark:bg-teal-950/10 p-4 rounded-3xl border border-teal-100 dark:border-teal-900/30">
-        <h3 class="text-xs font-bold uppercase text-teal-700 dark:text-teal-400 tracking-wider px-1 flex items-center gap-2">
-          <i data-lucide="bot" class="w-4 h-4 text-teal-500"></i> 🤖 Proposte Svuota-Tutto dell'AI
-        </h3>
-        <div id="ai-recipes-container" class="space-y-3"></div>
       </div>
     </section>
 
@@ -876,16 +869,6 @@
       '🥛', '🧀', '🥓', '🥗', '🥦', '🥕', '🥫', '🍲', '🧃', '🥚', 
       '🍗', '🥩', '🐟', '🍎', '🍇', '🍞', '🧈', '🍾', '🍮', '🥑', 
       '🍋', '🫐', '🍟', '🥟', '📦', '🍦', '🧊', '🏷️', '🍪', '🍯'
-    ];
-
-    const builtinAIRecipes = [
-      { id: 'ai1', title: 'Hummus Tradizionale di Ceci', ingredients: ['Ceci', 'Limone', 'Olio', 'Aglio', 'Tahina'], isVegan: true, link: '' },
-      { id: 'ai2', title: 'Pasta Integrale al Sugo di Pomodoro e Basilico', ingredients: ['Pasta integrale', 'Passata di pomodoro', 'Olio', 'Aglio', 'Basilico'], isVegan: true, link: '' },
-      { id: 'ai3', title: 'Bowl di Tofu Saltato con Verdure', ingredients: ['Tofu', 'Salsa di soia', 'Zucchine', 'Carote', 'Olio di sesamo'], isVegan: true, link: '' },
-      { id: 'ai4', title: 'Padellata di Seitan con Peperoni', ingredients: ['Seitan', 'Peperoni', 'Cipolla', 'Olio', 'Salsa di soia'], isVegan: true, link: '' },
-      { id: 'ai5', title: 'Insalata Ricca di Lupini ed Avocado', ingredients: ['Lupini', 'Avocado', 'Pomodorini', 'Olio', 'Limone'], isVegan: true, link: '' },
-      { id: 'ai6', title: 'Vellutata di Zucca e Carote allo Zenzero', ingredients: ['Zucca', 'Carote', 'Cipolla', 'Olio', 'Zenzero'], isVegan: true, link: '' },
-      { id: 'ai7', title: 'Burger Vegetale con Mopur e Insalata', ingredients: ['Mopur', 'Panini', 'Insalata', 'Pomodoro'], isVegan: true, link: '' }
     ];
 
     const connectedRef = db.ref(".info/connected");
@@ -1794,17 +1777,6 @@
           myRecipesContainer.innerHTML = `<div class="text-xs text-gray-400 p-2">Nessuna ricetta personale corrispondente. Aggiungine una cliccando su "Nuova Ricetta"!</div>`;
         } else {
           myRecipesContainer.innerHTML = myRecipesList.map(rec => renderRecipeCard(rec, true)).join('');
-        }
-      }
-
-      const aiContainer = document.getElementById('ai-recipes-container');
-      const aiList = builtinAIRecipes.filter(matchesRecipe);
-
-      if (aiContainer) {
-        if (aiList.length === 0) {
-          aiContainer.innerHTML = `<div class="text-xs text-gray-400 p-2">Nessuna proposta AI trovata con i filtri attivi.</div>`;
-        } else {
-          aiContainer.innerHTML = aiList.map(rec => renderRecipeCard(rec, false)).join('');
         }
       }
 
