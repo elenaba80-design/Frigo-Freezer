@@ -12,6 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script>
     tailwind.config = { darkMode: 'media' }
   </script>
@@ -844,19 +845,38 @@
   </div>
 
   <script>
-    const PROD_DATABASE_URL = "https://freezer-3960e-default-rtdb.firebaseio.com";
-    const TEST_DATABASE_URL = "https://dispensa-test-elena-default-rtdb.firebaseio.com";
+    const PROD_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyCOljfd-EERukLj552ThoMxe0NmflGibYs",
+      authDomain: "freezer-3960e.firebaseapp.com",
+      databaseURL: "https://freezer-3960e-default-rtdb.firebaseio.com",
+      projectId: "freezer-3960e"
+    };
+    const TEST_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyBwGNaUiDOCc8jAvmKnzHE1wylarWwnYA8",
+      authDomain: "dispensa-test-elena.firebaseapp.com",
+      databaseURL: "https://dispensa-test-elena-default-rtdb.firebaseio.com",
+      projectId: "dispensa-test-elena"
+    };
 
     const isTestMode = localStorage.getItem('dispensaTestMode') === 'true';
 
-    const firebaseConfig = {
-      databaseURL: isTestMode ? TEST_DATABASE_URL : PROD_DATABASE_URL
-    };
+    const firebaseConfig = isTestMode ? TEST_FIREBASE_CONFIG : PROD_FIREBASE_CONFIG;
 
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
+
+    let dbListenersInitialized = false;
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user && !dbListenersInitialized) {
+        dbListenersInitialized = true;
+        initDbListeners();
+      }
+    });
+    firebase.auth().signInAnonymously().catch((err) => {
+      console.error('Errore accesso anonimo:', err);
+    });
 
     document.getElementById('test-mode-toggle').checked = isTestMode;
     document.getElementById('test-mode-banner').classList.toggle('hidden', !isTestMode);
@@ -923,7 +943,9 @@
     document.addEventListener('DOMContentLoaded', () => {
       setupDefaultDates();
       renderIconPicker();
+    });
 
+    function initDbListeners() {
       db.ref("fridge_items").on("value", (snapshot) => { fridgeData = snapshot.val() || {}; renderAll(); });
       db.ref("freezer_items").on("value", (snapshot) => { freezerData = snapshot.val() || {}; renderAll(); });
       db.ref("pantry_items").on("value", (snapshot) => { pantryData = snapshot.val() || {}; renderAll(); });
@@ -967,7 +989,7 @@
         mealPlanData = snapshot.val() || null;
         renderMealPlan();
       });
-    });
+    }
 
     function setupDefaultDates() {
       const today = new Date().toISOString().split('T')[0];

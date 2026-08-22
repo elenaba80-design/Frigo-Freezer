@@ -15,6 +15,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script>
     tailwind.config = { darkMode: 'media' }
   </script>
@@ -73,7 +74,10 @@
   <script>
     // Stessa configurazione Firebase dell'app principale
     const firebaseConfig = {
-      databaseURL: "https://freezer-3960e-default-rtdb.firebaseio.com"
+      apiKey: "AIzaSyCOljfd-EERukLj552ThoMxe0NmflGibYs",
+      authDomain: "freezer-3960e.firebaseapp.com",
+      databaseURL: "https://freezer-3960e-default-rtdb.firebaseio.com",
+      projectId: "freezer-3960e"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -99,13 +103,22 @@
       }
     });
 
-    db.ref("fridge_items").on("value", (snapshot) => {
-      fridgeData = snapshot.val() || {};
-      renderResults();
+    let dbListenersInitialized = false;
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user && !dbListenersInitialized) {
+        dbListenersInitialized = true;
+        db.ref("fridge_items").on("value", (snapshot) => {
+          fridgeData = snapshot.val() || {};
+          renderResults();
+        });
+        db.ref("freezer_items").on("value", (snapshot) => {
+          freezerData = snapshot.val() || {};
+          renderResults();
+        });
+      }
     });
-    db.ref("freezer_items").on("value", (snapshot) => {
-      freezerData = snapshot.val() || {};
-      renderResults();
+    firebase.auth().signInAnonymously().catch((err) => {
+      console.error('Errore accesso anonimo:', err);
     });
 
     function normalize(str) {
