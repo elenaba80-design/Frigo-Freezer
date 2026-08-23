@@ -83,6 +83,14 @@
         <span class="text-[7px] font-bold text-gray-700 dark:text-gray-200 leading-none">Dispensa</span>
       </button>
 
+      <button onclick="switchTab('receipts')" class="relative flex flex-col items-center justify-center gap-0 w-14 h-14 flex-shrink-0 bg-white dark:bg-gray-800 p-0.5 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
+        <span id="nav-receipts-queue-badge" class="hidden absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 flex items-center justify-center bg-red-500 text-white text-[8px] font-bold rounded-full border-2 border-white dark:border-gray-800"><span id="nav-receipts-queue-count">0</span></span>
+        <div class="p-1 bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400 rounded-md">
+          <i data-lucide="receipt" class="w-6 h-6"></i>
+        </div>
+        <span class="text-[7px] font-bold text-gray-700 dark:text-gray-200 leading-none">Scontrini</span>
+      </button>
+
       <button onclick="switchTab('shopping')" class="flex flex-col items-center justify-center gap-0 w-14 h-14 flex-shrink-0 bg-white dark:bg-gray-800 p-0.5 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
         <div class="p-1 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-md">
           <i data-lucide="shopping-cart" class="w-6 h-6"></i>
@@ -137,11 +145,12 @@
       </div>
 
       <div class="grid grid-cols-5 gap-2">
-        <button onclick="openReceiptModal()" class="flex flex-col items-center justify-center gap-1 aspect-square bg-white dark:bg-gray-800 p-2 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
+        <button onclick="switchTab('receipts')" class="relative flex flex-col items-center justify-center gap-1 aspect-square bg-white dark:bg-gray-800 p-2 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
+          <span id="home-receipts-queue-badge" class="hidden absolute top-1.5 right-1.5 min-w-[20px] h-5 px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-white dark:border-gray-800"><span id="home-receipts-queue-count">0</span></span>
           <div class="p-2 bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400 rounded-2xl">
             <i data-lucide="receipt" class="w-7 h-7"></i>
           </div>
-          <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200 text-center leading-tight">Importa<br>Scontrino</span>
+          <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200">Scontrini</span>
         </button>
 
         <button onclick="switchTab('shopping')" class="relative flex flex-col items-center justify-center gap-1 aspect-square bg-white dark:bg-gray-800 p-2 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
@@ -185,6 +194,32 @@
         </div>
         <div id="global-search-results" class="hidden flex flex-col gap-2 max-h-48 overflow-y-auto mt-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-700"></div>
       </div>
+    </section>
+
+    <section id="tab-receipts" class="hidden max-w-3xl mx-auto w-full space-y-4">
+      <div class="bg-gradient-to-r from-pink-500 to-rose-600 text-white p-5 rounded-3xl shadow-sm">
+        <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="receipt" class="w-6 h-6"></i> Scontrini</h2>
+        <p class="text-xs text-pink-100 mt-1">Carica un nuovo scontrino oppure importa quelli già analizzati in coda.</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="openReceiptModal()" class="flex flex-col items-center justify-center gap-2 p-5 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
+          <div class="p-3 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+            <i data-lucide="upload" class="w-7 h-7"></i>
+          </div>
+          <span class="text-sm font-bold text-gray-700 dark:text-gray-200 text-center">Importa Scontrini</span>
+        </button>
+
+        <button onclick="showReceiptQueueView()" class="relative flex flex-col items-center justify-center gap-2 p-5 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
+          <span id="receipts-queue-count-badge" class="hidden absolute top-2 right-2 min-w-[22px] h-5 px-1.5 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full"><span id="receipts-queue-count">0</span></span>
+          <div class="p-3 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+            <i data-lucide="list-checks" class="w-7 h-7"></i>
+          </div>
+          <span class="text-sm font-bold text-gray-700 dark:text-gray-200 text-center">Scontrini in Coda</span>
+        </button>
+      </div>
+
+      <div id="receipt-queue-list-container" class="hidden space-y-2"></div>
     </section>
 
     <section id="tab-shopping" class="hidden max-w-3xl mx-auto w-full space-y-4">
@@ -505,19 +540,25 @@
 
   </div>
 
-  <div id="bulk-action-bar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-gray-700 dark:border-gray-300 hidden transition-all">
-    <div class="text-xs font-bold flex items-center gap-1.5">
+  <div id="bulk-action-bar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-gray-700 dark:border-gray-300 hidden transition-all max-w-[94vw] overflow-x-auto">
+    <div class="text-xs font-bold flex items-center gap-1.5 flex-shrink-0">
       <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]" id="bulk-selected-count">0</span>
       <span>Selezionati</span>
     </div>
-    <div class="h-4 w-px bg-gray-700 dark:bg-gray-300"></div>
-    <button onclick="openBulkCategoryModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 dark:bg-gray-200 dark:hover:bg-gray-300 rounded-xl text-xs font-bold transition">
+    <div class="h-4 w-px bg-gray-700 dark:bg-gray-300 flex-shrink-0"></div>
+    <button onclick="selectAllVisible()" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 dark:bg-gray-200 dark:hover:bg-gray-300 rounded-xl text-xs font-bold transition whitespace-nowrap">
+      <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Seleziona Tutti
+    </button>
+    <button onclick="openBulkCategoryModal()" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 dark:bg-gray-200 dark:hover:bg-gray-300 rounded-xl text-xs font-bold transition whitespace-nowrap">
       <i data-lucide="tag" class="w-3.5 h-3.5 text-amber-400"></i> Cambia Categoria
     </button>
-    <button onclick="openBulkMoveModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">
+    <button onclick="openBulkMoveModal()" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition whitespace-nowrap">
       <i data-lucide="arrow-left-right" class="w-3.5 h-3.5"></i> Sposta Reparto
     </button>
-    <button onclick="clearBulkSelection()" class="p-1.5 text-gray-400 hover:text-white dark:hover:text-black rounded-lg" title="Deseleziona tutto">
+    <button onclick="openBulkDeleteConfirm()" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition whitespace-nowrap">
+      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Elimina
+    </button>
+    <button onclick="clearBulkSelection()" class="flex-shrink-0 p-1.5 text-gray-400 hover:text-white dark:hover:text-black rounded-lg" title="Deseleziona tutto">
       <i data-lucide="x" class="w-4 h-4"></i>
     </button>
   </div>
@@ -622,7 +663,7 @@
     <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-5 space-y-4 border border-gray-100 dark:border-gray-700 shadow-xl">
       <div class="flex items-center gap-2">
         <i data-lucide="trash-2" class="w-5 h-5 text-red-500"></i>
-        <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100">Rimuovere alimento?</h3>
+        <h3 id="confirm-delete-title" class="font-bold text-lg text-gray-800 dark:text-gray-100">Rimuovere alimento?</h3>
       </div>
       <p class="text-sm text-gray-600 dark:text-gray-300">Cosa vuoi fare con <strong id="confirm-delete-name"></strong>?</p>
       <div class="flex flex-col gap-2">
@@ -758,7 +799,7 @@
         <h3 class="font-bold text-lg flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
           <i data-lucide="receipt" class="w-6 h-6"></i> Importazione Scontrino Digitale
         </h3>
-        <button onclick="closeModal('modal-receipt')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <button onclick="closeReceiptModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
 
       <div id="receipt-step-upload" class="space-y-4">
@@ -767,15 +808,16 @@
           <textarea id="receipt-text-input" rows="6" placeholder="Incolla il testo del tuo scontrino... (es. PANINI INTEGRALI 0,41 D, SEITAN NATURALE 4,23 B)" class="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-xs font-mono outline-none"></textarea>
         </div>
         <div class="flex items-center gap-3">
-          <label class="flex-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 py-2.5 px-4 rounded-xl text-xs font-bold text-center cursor-pointer hover:bg-emerald-100 transition">
-            📁 Carica un File Scontrino
-            <input type="file" id="receipt-file-input" accept=".txt,.pdf,.png,.jpg" onchange="handleReceiptFileUpload(event)" class="hidden">
+          <label id="receipt-file-label" class="flex-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 py-2.5 px-4 rounded-xl text-xs font-bold text-center cursor-pointer hover:bg-emerald-100 transition">
+            📁 Carica Foto o PDF Scontrino
+            <input type="file" id="receipt-file-input" accept=".pdf,.png,.jpg,.jpeg" onchange="handleReceiptFileUpload(event)" class="hidden">
           </label>
           <button onclick="processReceiptText()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition flex items-center gap-1.5">
             <span>Analizza Scontrino</span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </button>
         </div>
+        <div id="receipt-upload-status" class="hidden"></div>
       </div>
 
       <div id="receipt-step-process" class="hidden space-y-6">
@@ -817,10 +859,10 @@
 
             <div class="flex gap-2 pt-1">
               <button onclick="skipNewItem()" class="px-3 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-bold rounded-xl text-xs transition">
-                Salta questo Alimento
+                Annulla
               </button>
               <button onclick="saveAndNextNewItem()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm">
-                Salva e Passa al Successivo
+                Aggiungi
               </button>
             </div>
           </div>
@@ -833,6 +875,11 @@
           </h4>
           
           <div id="part2-items-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+
+          <button id="btn-delete-selected" onclick="deleteSelectedPart2Items()" class="hidden w-full py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl text-xs shadow-sm transition flex items-center justify-center gap-2">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>ELIMINA SELEZIONATI (<span id="part2-selected-count">0</span>)</span>
+          </button>
 
           <button id="btn-add-mass" onclick="addAllMassRecognizedItems()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md transition flex items-center justify-center gap-2">
             <i data-lucide="check-check" class="w-4 h-4"></i>
@@ -889,8 +936,11 @@
     let fridgeData = {};
     let freezerData = {};
     let pantryData = {}; 
-    let shoppingData = {}; 
+    let shoppingData = {};
     let masterDbData = {};
+    let receiptQueueData = {};
+    let currentQueueReadingId = null;
+    let selectedPart2Names = new Set();
     
     let freezerShelvesData = {};
     let pantryShelvesData = {}; 
@@ -915,6 +965,7 @@
 
     // SELEZIONE MULTIPLA ALIMENTI
     let selectedItemsForBulk = new Map(); // key: id, value: { id, location }
+    let lastVisibleListIds = { fridge: [], freezer: [], pantry: [] };
 
     // PARSER SCONTRINO
     let unmappedReceiptItems = [];
@@ -951,18 +1002,19 @@
       db.ref("pantry_items").on("value", (snapshot) => { pantryData = snapshot.val() || {}; renderAll(); });
       db.ref("shopping_items").on("value", (snapshot) => { shoppingData = snapshot.val() || {}; renderAll(); }); 
       db.ref("master_db").on("value", (snapshot) => { masterDbData = snapshot.val() || {}; });
+      db.ref("fridge_queue").on("value", (snapshot) => { receiptQueueData = snapshot.val() || {}; renderAll(); });
 
       db.ref("freezer_shelves").on("value", (snapshot) => {
         const val = snapshot.val();
         if (!val) {
-          db.ref("freezer_shelves").set({ fz1: { name: 'Cassetto Superiore' }, fz2: { name: 'Cassetto Centrale' }, fz3: { name: 'Cassetto Inferiore' } });
+          db.ref("freezer_shelves").set({ fz1: { name: 'Cassetto Superiore', order: 0 }, fz2: { name: 'Cassetto Centrale', order: 1 }, fz3: { name: 'Cassetto Inferiore', order: 2 } });
         } else { freezerShelvesData = val; renderAll(); }
       });
 
       db.ref("pantry_shelves").on("value", (snapshot) => {
         const val = snapshot.val();
         if (!val) {
-          db.ref("pantry_shelves").set({ p1: { name: 'Scaffale Alto' }, p2: { name: 'Scaffale Centrale' }, p3: { name: 'Scaffale Basso' }, p4: { name: 'Cassettoni' } });
+          db.ref("pantry_shelves").set({ p1: { name: 'Scaffale Alto', order: 0 }, p2: { name: 'Scaffale Centrale', order: 1 }, p3: { name: 'Scaffale Basso', order: 2 }, p4: { name: 'Cassettoni', order: 3 } });
         } else { pantryShelvesData = val; renderAll(); }
       });
 
@@ -1001,7 +1053,7 @@
       activeTab = tabId;
       document.getElementById('app-header').classList.toggle('hidden', tabId !== 'home');
       document.getElementById('global-nav-grid').classList.toggle('hidden', tabId === 'home');
-      ['home', 'fridge', 'freezer', 'pantry', 'shopping', 'add', 'recipes'].forEach(t => {
+      ['home', 'fridge', 'freezer', 'pantry', 'shopping', 'add', 'recipes', 'receipts'].forEach(t => {
         const section = document.getElementById(`tab-${t}`);
         if (!section) return;
         section.classList.toggle('hidden', t !== tabId);
@@ -1038,27 +1090,31 @@
       let resultsHTML = '';
       let matchCount = 0;
 
-      const searchInLocation = (dataObj, shelvesObj, locName, locColorClass, hasShelves) => {
+      const searchInLocation = (dataObj, shelvesObj, locName, locColorClass, hasShelves, locCode) => {
         Object.entries(dataObj).forEach(([id, item]) => {
           if (item.name && item.name.toLowerCase().includes(query)) {
             matchCount++;
             const shelfName = hasShelves ? (shelvesObj[item.shelf]?.name || 'Generale') : 'Unico';
             resultsHTML += `
-              <div class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center gap-2">
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${locColorClass}">${locName}</span>
-                  <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">${item.name}</span>
+              <div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 ${locColorClass}">${locName}</span>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">${item.name}</span>
                 </div>
-                <div class="text-[11px] text-gray-400">${hasShelves ? `📍 ${shelfName} • ` : ''}Qtà: ${item.qty || 1}</div>
+                <div class="flex items-center gap-1 flex-shrink-0">
+                  <span class="text-[11px] text-gray-400 whitespace-nowrap">${hasShelves ? `📍 ${shelfName} • ` : ''}Qtà: ${item.qty || 1}</span>
+                  <button onclick="openEditModal('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-emerald-600" title="Modifica"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                  <button onclick="deleteFoodItem('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-red-500" title="Elimina"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                </div>
               </div>
             `;
           }
         });
       };
 
-      searchInLocation(fridgeData, {}, '🥗 Frigo', 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300', false);
-      searchInLocation(freezerData, freezerShelvesData, '❄️ Freezer', 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300', true);
-      searchInLocation(pantryData, pantryShelvesData, '🗄️ Dispensa', 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300', true);
+      searchInLocation(fridgeData, {}, '🥗 Frigo', 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300', false, 'fridge');
+      searchInLocation(freezerData, freezerShelvesData, '❄️ Freezer', 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300', true, 'freezer');
+      searchInLocation(pantryData, pantryShelvesData, '🗄️ Dispensa', 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300', true, 'pantry');
 
       if (matchCount === 0) {
         resultsHTML = `<div class="text-xs text-gray-500 p-2 text-center">Nessun ingrediente trovato.</div>`;
@@ -1066,6 +1122,15 @@
 
       resultsContainer.innerHTML = resultsHTML;
       resultsContainer.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function refreshGlobalSearchIfOpen() {
+      const input = document.getElementById('global-search-input');
+      const results = document.getElementById('global-search-results');
+      if (input && results && !results.classList.contains('hidden')) {
+        handleGlobalSearch();
+      }
     }
 
     function renderAll() {
@@ -1080,6 +1145,8 @@
       renderRecipes();
       updateBulkActionBar();
       renderQuickRemoveListIfOpen();
+      refreshGlobalSearchIfOpen();
+      renderReceiptQueue();
       lucide.createIcons();
     }
 
@@ -1186,22 +1253,53 @@
     }
 
     let pendingDeleteItem = null;
+    let pendingBulkDeleteItems = null;
 
     function deleteFoodItem(id, loc) {
       const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
       if (!source) return;
 
       pendingDeleteItem = { id, loc, name: getBaseFoodName(source.name) };
+      document.getElementById('confirm-delete-title').textContent = 'Rimuovere alimento?';
       document.getElementById('confirm-delete-name').textContent = pendingDeleteItem.name;
+      document.getElementById('modal-confirm-delete').classList.remove('hidden');
+    }
+
+    function openBulkDeleteConfirm() {
+      if (selectedItemsForBulk.size === 0) return;
+      pendingBulkDeleteItems = Array.from(selectedItemsForBulk.values());
+      document.getElementById('confirm-delete-title').textContent = 'Rimuovere gli alimenti selezionati?';
+      document.getElementById('confirm-delete-name').textContent = `${pendingBulkDeleteItems.length} alimenti selezionati`;
       document.getElementById('modal-confirm-delete').classList.remove('hidden');
     }
 
     function cancelDeleteItem() {
       pendingDeleteItem = null;
+      pendingBulkDeleteItems = null;
       closeModal('modal-confirm-delete');
     }
 
     function confirmDeleteItem(addToShoppingList) {
+      if (pendingBulkDeleteItems) {
+        pendingBulkDeleteItems.forEach(({ id, location }) => {
+          const sourceData = location === 'fridge' ? fridgeData : (location === 'freezer' ? freezerData : pantryData);
+          const source = sourceData[id];
+          if (!source) return;
+
+          if (addToShoppingList) {
+            db.ref("shopping_items").push({ name: getBaseFoodName(source.name), addedAt: new Date().toISOString() });
+          }
+
+          const path = location === 'fridge' ? 'fridge_items' : (location === 'freezer' ? 'freezer_items' : 'pantry_items');
+          db.ref(`${path}/${id}`).remove();
+        });
+
+        pendingBulkDeleteItems = null;
+        closeModal('modal-confirm-delete');
+        clearBulkSelection();
+        return;
+      }
+
       if (!pendingDeleteItem) return;
       const { id, loc, name } = pendingDeleteItem;
 
@@ -1391,6 +1489,14 @@
       renderAll();
     }
 
+    function selectAllVisible() {
+      const loc = activeTab;
+      const ids = lastVisibleListIds[loc];
+      if (!ids || ids.length === 0) return;
+      ids.forEach(id => selectedItemsForBulk.set(id, { id, location: loc }));
+      renderAll();
+    }
+
     function openBulkCategoryModal() {
       const catSelect = document.getElementById('bulk-category-select');
       catSelect.innerHTML = '';
@@ -1428,7 +1534,7 @@
         wrapper.classList.remove('hidden');
         select.innerHTML = '';
         const shelves = targetLoc === 'freezer' ? freezerShelvesData : pantryShelvesData;
-        Object.entries(shelves).forEach(([id, s]) => {
+        getOrderedShelves(shelves).forEach(([id, s]) => {
           select.innerHTML += `<option value="${id}">${s.name}</option>`;
         });
       }
@@ -1485,7 +1591,7 @@
       let destinationShelf = '';
 
       if (toLoc === 'freezer' || toLoc === 'pantry') {
-        const shelves = Object.entries(toLoc === 'freezer' ? freezerShelvesData : pantryShelvesData);
+        const shelves = getOrderedShelves(toLoc === 'freezer' ? freezerShelvesData : pantryShelvesData);
         if (shelves.length > 0) {
           const shelfOptions = shelves.map(([sid, s], index) => `${index + 1}. ${s.name}`).join('\n');
           const shelfChoice = prompt(`Scegli il cassetto/scaffale di destinazione:\n${shelfOptions}\n\nInserisci il numero (o Annulla per predefinito):`);
@@ -1521,7 +1627,7 @@
 
       if (hasShelves && filterBar) {
         filterBar.innerHTML = `<button onclick="filterShelf('${locCode}', 'all')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedShelf === 'all' ? `bg-${colorClass}-600 text-white` : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">Tutti i ripiani</button>`;
-        Object.entries(locShelves).forEach(([id, s]) => {
+        getOrderedShelves(locShelves).forEach(([id, s]) => {
           filterBar.innerHTML += `<button onclick="filterShelf('${locCode}', '${id}')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedShelf === id ? `bg-${colorClass}-600 text-white` : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">${s.name}</button>`;
         });
       }
@@ -1557,6 +1663,8 @@
         }
         return 0;
       });
+
+      lastVisibleListIds[locCode] = items.map(i => i.id);
 
       if (items.length === 0) {
         listContainer.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">Nessun alimento trovato.</div>`;
@@ -1648,7 +1756,7 @@
         shelfSelect.innerHTML = '';
         let shelves = loc === 'freezer' ? freezerShelvesData : pantryShelvesData;
 
-        Object.entries(shelves).forEach(([id, s]) => {
+        getOrderedShelves(shelves).forEach(([id, s]) => {
           shelfSelect.innerHTML += `<option value="${id}">${s.name}</option>`;
         });
         if (currentShelf && shelves[currentShelf]) shelfSelect.value = currentShelf;
@@ -1713,7 +1821,7 @@
         shelfGroup.classList.remove('hidden');
         shelfSelect.innerHTML = '';
         const shelves = loc === 'freezer' ? freezerShelvesData : pantryShelvesData;
-        Object.entries(shelves).forEach(([sId, s]) => {
+        getOrderedShelves(shelves).forEach(([sId, s]) => {
           shelfSelect.innerHTML += `<option value="${sId}">${s.name}</option>`;
         });
         shelfSelect.value = item.shelf || '';
@@ -2210,6 +2318,10 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       lucide.createIcons();
     }
 
+    function getOrderedShelves(shelvesObj) {
+      return Object.entries(shelvesObj).sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0));
+    }
+
     function openShelvesModal() { document.getElementById('modal-shelves').classList.remove('hidden'); renderShelvesManageList(); }
     
     function switchManageShelfTab(tab) {
@@ -2225,29 +2337,91 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
     function renderShelvesManageList() {
       const container = document.getElementById('shelves-manage-list');
       if (!container) return;
-      container.innerHTML = '';
       const shelves = activeManageShelfTab === 'freezer' ? freezerShelvesData : pantryShelvesData;
       const path = activeManageShelfTab === 'freezer' ? 'freezer_shelves' : 'pantry_shelves';
 
-      Object.entries(shelves).forEach(([id, s]) => {
-        container.innerHTML += `
-          <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-100 dark:border-gray-600 text-sm gap-2">
-            <input type="text" value="${s.name.replace(/"/g, '&quot;')}" onchange="updateShelfName('${path}', '${id}', this.value)" class="bg-transparent font-medium outline-none flex-1 focus:bg-white dark:focus:bg-gray-800 rounded px-1.5 py-0.5">
-            <button onclick="deleteShelf('${path}', '${id}')" class="text-gray-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+      container.innerHTML = getOrderedShelves(shelves).map(([id, s]) => {
+        const escapedName = s.name.replace(/"/g, '&quot;');
+        return `
+          <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-100 dark:border-gray-600 text-sm gap-2"
+               draggable="true" data-shelf-id="${id}"
+               ondragstart="handleShelfDragStart(event, '${id}')" ondragover="handleShelfDragOver(event)"
+               ondrop="handleShelfDrop(event, '${id}')" ondragend="handleShelfDragEnd(event)">
+            <i data-lucide="grip-vertical" class="w-4 h-4 text-gray-300 dark:text-gray-500 cursor-grab flex-shrink-0"></i>
+            <input type="text" value="${escapedName}" data-original="${escapedName}" oninput="handleShelfNameInput(this, '${id}')" class="bg-transparent font-medium outline-none flex-1 min-w-0 focus:bg-white dark:focus:bg-gray-800 rounded px-1.5 py-0.5">
+            <button id="shelf-save-${id}" onclick="saveShelfName('${path}', '${id}')" class="hidden flex-shrink-0 text-emerald-700 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-300 px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap">Salva Modifiche</button>
+            <button onclick="deleteShelf('${path}', '${id}')" class="text-gray-400 hover:text-red-500 p-1 flex-shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         `;
-      });
+      }).join('');
       lucide.createIcons();
     }
 
-    function updateShelfName(path, id, newName) { if (newName && newName.trim()) db.ref(`${path}/${id}`).update({ name: newName.trim() }); }
+    function handleShelfNameInput(input, id) {
+      const btn = document.getElementById(`shelf-save-${id}`);
+      if (btn) btn.classList.toggle('hidden', input.value === input.dataset.original);
+    }
+
+    function saveShelfName(path, id) {
+      const row = document.querySelector(`#shelves-manage-list [data-shelf-id="${id}"]`);
+      const input = row?.querySelector('input[type="text"]');
+      if (!input) return;
+      const newName = input.value.trim();
+      if (!newName) return;
+      db.ref(`${path}/${id}`).update({ name: newName }, () => {
+        input.dataset.original = newName;
+        document.getElementById(`shelf-save-${id}`).classList.add('hidden');
+      });
+    }
+
     function handleAddShelf(e) {
       e.preventDefault();
       const name = document.getElementById('new-shelf-name').value;
       const path = activeManageShelfTab === 'freezer' ? 'freezer_shelves' : 'pantry_shelves';
-      if (name) db.ref(path).push({ name }, () => { document.getElementById('new-shelf-name').value = ''; });
+      const shelves = activeManageShelfTab === 'freezer' ? freezerShelvesData : pantryShelvesData;
+      const order = Object.keys(shelves).length;
+      if (name) db.ref(path).push({ name, order }, () => { document.getElementById('new-shelf-name').value = ''; });
     }
     function deleteShelf(path, id) { if (confirm("Eliminare questa posizione?")) db.ref(`${path}/${id}`).remove(); }
+
+    let draggedShelfId = null;
+
+    function handleShelfDragStart(e, id) {
+      draggedShelfId = id;
+      e.dataTransfer.effectAllowed = 'move';
+      e.currentTarget.classList.add('opacity-40');
+    }
+
+    function handleShelfDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleShelfDragEnd(e) {
+      e.currentTarget.classList.remove('opacity-40');
+    }
+
+    function handleShelfDrop(e, targetId) {
+      e.preventDefault();
+      if (!draggedShelfId || draggedShelfId === targetId) return;
+
+      const path = activeManageShelfTab === 'freezer' ? 'freezer_shelves' : 'pantry_shelves';
+      const shelves = activeManageShelfTab === 'freezer' ? freezerShelvesData : pantryShelvesData;
+      const orderedIds = getOrderedShelves(shelves).map(([id]) => id);
+
+      const fromIdx = orderedIds.indexOf(draggedShelfId);
+      const toIdx = orderedIds.indexOf(targetId);
+      if (fromIdx === -1 || toIdx === -1) return;
+
+      orderedIds.splice(fromIdx, 1);
+      orderedIds.splice(toIdx, 0, draggedShelfId);
+
+      const updates = {};
+      orderedIds.forEach((id, idx) => { updates[`${id}/order`] = idx; });
+      db.ref(path).update(updates);
+
+      draggedShelfId = null;
+    }
 
     function openCategoriesModal() {
       document.getElementById('modal-categories').classList.remove('hidden');
@@ -2413,20 +2587,149 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
     // =========================================================
 
     function openReceiptModal() {
+      currentQueueReadingId = null;
       document.getElementById('receipt-step-upload').classList.remove('hidden');
       document.getElementById('receipt-step-process').classList.add('hidden');
       document.getElementById('receipt-text-input').value = '';
+      document.getElementById('receipt-upload-status').classList.add('hidden');
       document.getElementById('modal-receipt').classList.remove('hidden');
     }
 
-    function handleReceiptFileUpload(e) {
+    function closeReceiptModal() {
+      currentQueueReadingId = null;
+      closeModal('modal-receipt');
+    }
+
+    function showReceiptQueueView() {
+      const container = document.getElementById('receipt-queue-list-container');
+      container.classList.remove('hidden');
+      renderReceiptQueue();
+    }
+
+    function getGroupedReceiptQueue() {
+      const groups = {};
+      Object.entries(receiptQueueData).forEach(([itemId, item]) => {
+        const rid = item.readingId || itemId;
+        if (!groups[rid]) groups[rid] = { readingId: rid, store: item.store, acquiredAt: item.acquiredAt, items: [] };
+        groups[rid].items.push({ id: itemId, ...item });
+      });
+      return Object.values(groups).sort((a, b) => new Date(b.acquiredAt || 0) - new Date(a.acquiredAt || 0));
+    }
+
+    function renderReceiptQueue() {
+      const groups = getGroupedReceiptQueue();
+
+      document.getElementById('receipts-queue-count').innerText = groups.length;
+      document.getElementById('receipts-queue-count-badge').classList.toggle('hidden', groups.length === 0);
+      document.getElementById('home-receipts-queue-count').innerText = groups.length;
+      document.getElementById('home-receipts-queue-badge').classList.toggle('hidden', groups.length === 0);
+      document.getElementById('nav-receipts-queue-count').innerText = groups.length;
+      document.getElementById('nav-receipts-queue-badge').classList.toggle('hidden', groups.length === 0);
+
+      const container = document.getElementById('receipt-queue-list-container');
+      if (container.classList.contains('hidden')) return;
+
+      if (groups.length === 0) {
+        container.innerHTML = `<div class="text-xs text-gray-400 text-center py-6">Nessuno scontrino in coda.</div>`;
+        return;
+      }
+
+      container.innerHTML = groups.map(g => {
+        const date = g.acquiredAt ? new Date(g.acquiredAt).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+        return `
+          <div class="flex items-center justify-between gap-2 p-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+            <div class="min-w-0">
+              <div class="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">${g.store || 'Scontrino'}</div>
+              <div class="text-[11px] text-gray-400">${date} • ${g.items.length} articoli</div>
+            </div>
+            <button onclick="importQueuedReceipt('${g.readingId}')" class="flex-shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm transition">Importa</button>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function importQueuedReceipt(readingId) {
+      const group = getGroupedReceiptQueue().find(g => g.readingId === readingId);
+      if (!group || group.items.length === 0) return;
+
+      currentQueueReadingId = readingId;
+      unmappedReceiptItems = [];
+      mappedReceiptItems = [];
+      selectedPart2Names.clear();
+
+      group.items.forEach(qItem => {
+        const raw = qItem.description || '';
+        const cleaned = pulisciVoceScontrino(raw);
+        if (cleaned.length < 3) return;
+
+        let matchedMaster = null;
+        Object.entries(masterDbData).forEach(([id, m]) => {
+          const aliases = m.aliases || [];
+          if (m.name.toLowerCase() === cleaned.toLowerCase() || aliases.some(a => a.toLowerCase() === cleaned.toLowerCase())) {
+            matchedMaster = { id, ...m };
+          }
+        });
+
+        const incrementBy = qItem.quantity || 1;
+        if (matchedMaster) {
+          mergeReceiptItem(mappedReceiptItems, cleaned, { raw, master: matchedMaster }, incrementBy);
+        } else {
+          mergeReceiptItem(unmappedReceiptItems, cleaned, { raw }, incrementBy);
+        }
+      });
+
+      document.getElementById('receipt-step-upload').classList.add('hidden');
+      document.getElementById('receipt-step-process').classList.remove('hidden');
+      document.getElementById('modal-receipt').classList.remove('hidden');
+
+      currentUnmappedIndex = 0;
+      renderPart1CurrentItem();
+      renderPart2List();
+    }
+
+    const RECEIPT_UPLOAD_ENDPOINT = 'https://pacchieri-scontriniai.jaspit.cloud/scontrini';
+
+    async function handleReceiptFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        document.getElementById('receipt-text-input').value = evt.target.result;
+
+      const statusEl = document.getElementById('receipt-upload-status');
+      const fileLabel = document.getElementById('receipt-file-label');
+
+      const setStatus = (text, variant) => {
+        const variants = {
+          loading: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600',
+          success: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
+          error: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+        };
+        statusEl.className = `text-xs font-semibold rounded-xl p-3 ${variants[variant]}`;
+        statusEl.textContent = text;
+        statusEl.classList.remove('hidden');
       };
-      reader.readAsText(file);
+
+      fileLabel.classList.add('opacity-50', 'pointer-events-none');
+      setStatus('⏳ Caricamento in corso...', 'loading');
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(RECEIPT_UPLOAD_ENDPOINT, { method: 'POST', body: formData });
+
+        if (response.status === 202) {
+          setStatus('✅ Scontrino ricevuto! Verrà elaborato a breve e i prodotti compariranno in coda.', 'success');
+        } else {
+          throw new Error(`HTTP ${response.status}`);
+        }
+      } catch (err) {
+        console.error('Errore upload scontrino:', err);
+        setStatus('❌ Errore durante il caricamento dello scontrino. Riprova.', 'error');
+      } finally {
+        fileLabel.classList.remove('opacity-50', 'pointer-events-none');
+        e.target.value = '';
+      }
     }
 
     function calcolaSimilarita(a, b) {
@@ -2452,6 +2755,15 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       return 1 - (track[s2.length][s1.length] / Math.max(s1.length, s2.length));
     }
 
+    function mergeReceiptItem(arr, cleaned, extra, incrementBy) {
+      const existing = arr.find(it => it.cleaned.toLowerCase() === cleaned.toLowerCase());
+      if (existing) {
+        existing.qty = (existing.qty || 1) + incrementBy;
+      } else {
+        arr.push({ cleaned, qty: incrementBy, ...extra });
+      }
+    }
+
     function pulisciVoceScontrino(raw) {
       return raw.replace(/[\d,.]+\s*[DAB]/gi, '')
                 .replace(/X\d+[\d,.]*/gi, '')
@@ -2472,6 +2784,7 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
 
       unmappedReceiptItems = [];
       mappedReceiptItems = [];
+      selectedPart2Names.clear();
 
       lines.forEach(line => {
         const uppercaseLine = line.toUpperCase();
@@ -2490,9 +2803,9 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
         });
 
         if (matchedMaster) {
-          mappedReceiptItems.push({ raw: line, cleaned: cleanedLine, master: matchedMaster });
+          mergeReceiptItem(mappedReceiptItems, cleanedLine, { raw: line, master: matchedMaster }, 1);
         } else {
-          unmappedReceiptItems.push({ raw: line, cleaned: cleanedLine });
+          mergeReceiptItem(unmappedReceiptItems, cleanedLine, { raw: line }, 1);
         }
       });
 
@@ -2515,7 +2828,7 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
         shelfWrapper.classList.remove('hidden');
         shelfSelect.innerHTML = '';
         const shelves = loc === 'freezer' ? freezerShelvesData : pantryShelvesData;
-        Object.entries(shelves).forEach(([id, s]) => {
+        getOrderedShelves(shelves).forEach(([id, s]) => {
           shelfSelect.innerHTML += `<option value="${id}">${s.name}</option>`;
         });
       }
@@ -2533,7 +2846,7 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
 
       document.getElementById('part1-current-index').innerText = currentUnmappedIndex + 1;
       document.getElementById('part1-total-count').innerText = unmappedReceiptItems.length;
-      document.getElementById('part1-raw-text').innerText = item.raw;
+      document.getElementById('part1-raw-text').innerText = item.raw + (item.qty > 1 ? ` ×${item.qty}` : '');
       document.getElementById('part1-name-input').value = item.cleaned;
 
       updatePart1ShelfVisibility();
@@ -2571,11 +2884,10 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       }
 
       db.ref(`master_db/${currentMergeCandidate.id}`).update({ aliases: updatedAliases }, () => {
-        mappedReceiptItems.push({
+        mergeReceiptItem(mappedReceiptItems, item.cleaned, {
           raw: item.raw,
-          cleaned: item.cleaned,
           master: { ...currentMergeCandidate, aliases: updatedAliases }
-        });
+        }, item.qty || 1);
         currentUnmappedIndex++;
         renderPart1CurrentItem();
         renderPart2List();
@@ -2598,11 +2910,10 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       };
 
       const newRef = db.ref("master_db").push(newMaster);
-      mappedReceiptItems.push({
+      mergeReceiptItem(mappedReceiptItems, item.cleaned, {
         raw: item.raw,
-        cleaned: item.cleaned,
         master: { id: newRef.key, ...newMaster }
-      });
+      }, item.qty || 1);
 
       currentUnmappedIndex++;
       renderPart1CurrentItem();
@@ -2613,6 +2924,12 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       const list = document.getElementById('part2-items-list');
       document.getElementById('part2-count').innerText = mappedReceiptItems.length;
 
+      const validNames = new Set(mappedReceiptItems.map(it => it.cleaned));
+      Array.from(selectedPart2Names).forEach(n => { if (!validNames.has(n)) selectedPart2Names.delete(n); });
+
+      document.getElementById('part2-selected-count').innerText = selectedPart2Names.size;
+      document.getElementById('btn-delete-selected').classList.toggle('hidden', selectedPart2Names.size === 0);
+
       if (mappedReceiptItems.length === 0) {
         list.innerHTML = `<div class="text-xs text-gray-400 py-4 text-center">Nessun cibo pronto. Configura i cibi nuovi sopra.</div>`;
         return;
@@ -2621,13 +2938,20 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       list.innerHTML = mappedReceiptItems.map((item, idx) => {
         const isFridge = item.master.locationDefault === 'fridge';
         const shelfName = isFridge ? 'Frigo' : (item.master.locationDefault === 'freezer' ? freezerShelvesData[item.master.shelfDefault]?.name : pantryShelvesData[item.master.shelfDefault]?.name) || 'Generale';
+        const isChecked = selectedPart2Names.has(item.cleaned);
         return `
           <div class="flex items-center justify-between p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
-            <div>
-              <div class="text-xs font-bold text-gray-800 dark:text-gray-100">${item.master.name}</div>
-              <div class="text-[10px] text-gray-400">📍 ${shelfName} • (${item.master.locationDefault || 'frigo'})</div>
+            <label class="flex items-center gap-2.5 min-w-0 cursor-pointer">
+              <input type="checkbox" onchange="togglePart2Selection(${idx})" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded accent-emerald-600 flex-shrink-0 cursor-pointer">
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-gray-800 dark:text-gray-100">${item.master.name}${item.qty > 1 ? ` <span class="text-emerald-600 dark:text-emerald-400">×${item.qty}</span>` : ''}</div>
+                <div class="text-[10px] text-gray-400">📍 ${shelfName} • (${item.master.locationDefault || 'frigo'})</div>
+              </div>
+            </label>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <button onclick="editPart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+              <button onclick="deletePart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
-            <button onclick="editPart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
           </div>
         `;
       }).join('');
@@ -2635,10 +2959,33 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       lucide.createIcons();
     }
 
+    function togglePart2Selection(idx) {
+      const item = mappedReceiptItems[idx];
+      if (!item) return;
+      if (selectedPart2Names.has(item.cleaned)) {
+        selectedPart2Names.delete(item.cleaned);
+      } else {
+        selectedPart2Names.add(item.cleaned);
+      }
+      renderPart2List();
+    }
+
+    function deleteSelectedPart2Items() {
+      if (selectedPart2Names.size === 0) return;
+      mappedReceiptItems = mappedReceiptItems.filter(item => !selectedPart2Names.has(item.cleaned));
+      selectedPart2Names.clear();
+      renderPart2List();
+    }
+
     function editPart2Item(idx) {
       const removed = mappedReceiptItems.splice(idx, 1)[0];
-      unmappedReceiptItems.splice(currentUnmappedIndex, 0, { raw: removed.raw, cleaned: removed.cleaned });
+      unmappedReceiptItems.splice(currentUnmappedIndex, 0, { raw: removed.raw, cleaned: removed.cleaned, qty: removed.qty || 1 });
       renderPart1CurrentItem();
+      renderPart2List();
+    }
+
+    function deletePart2Item(idx) {
+      mappedReceiptItems.splice(idx, 1);
       renderPart2List();
     }
 
@@ -2653,20 +3000,40 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       mappedReceiptItems.forEach(item => {
         const targetLoc = item.master.locationDefault || 'fridge';
         const path = targetLoc === 'fridge' ? 'fridge_items' : (targetLoc === 'freezer' ? 'freezer_items' : 'pantry_items');
+        const targetShelf = targetLoc === 'fridge' ? '' : (item.master.shelfDefault || '');
+        const locData = targetLoc === 'fridge' ? fridgeData : (targetLoc === 'freezer' ? freezerData : pantryData);
 
-        db.ref(path).push({
-          name: item.master.name,
-          shelf: targetLoc === 'fridge' ? '' : (item.master.shelfDefault || ''),
-          category: 'c1',
-          qty: 1,
-          entryDate: today,
-          expiryDate: '',
-          isOpenPiece: false
+        const existingId = Object.keys(locData).find(id => {
+          const existing = locData[id];
+          return !existing.isOpenPiece
+            && (existing.shelf || '') === targetShelf
+            && getBaseFoodName(existing.name).toLowerCase() === item.master.name.toLowerCase();
         });
+
+        if (existingId) {
+          const existing = locData[existingId];
+          db.ref(`${path}/${existingId}`).update({ qty: (parseInt(existing.qty) || 1) + (item.qty || 1) });
+        } else {
+          db.ref(path).push({
+            name: item.master.name,
+            shelf: targetShelf,
+            category: 'c1',
+            qty: item.qty || 1,
+            entryDate: today,
+            expiryDate: '',
+            isOpenPiece: false
+          });
+        }
       });
 
+      if (currentQueueReadingId) {
+        Object.entries(receiptQueueData).forEach(([itemId, item]) => {
+          if (item.readingId === currentQueueReadingId) db.ref(`fridge_queue/${itemId}`).remove();
+        });
+      }
+
       alert(`🚀 ${mappedReceiptItems.length} alimenti inseriti con successo nell'inventario!`);
-      closeModal('modal-receipt');
+      closeReceiptModal();
     }
   </script>
 </body>
