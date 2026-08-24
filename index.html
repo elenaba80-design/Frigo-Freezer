@@ -1059,6 +1059,7 @@
       db.ref("fridge_recipes").on("value", (snapshot) => {
         recipesData = snapshot.val() || {};
         renderRecipes();
+        renderMealPlan();
       });
 
       db.ref("meal_plan").on("value", (snapshot) => {
@@ -2293,7 +2294,11 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
         if (mealOpen) {
           const meal = mealPlanParsedMeals[mealIndex];
           if (meal && meal.ingredients.length > 0) {
-            html += `<button onclick="addMealPlanRecipeToMyRecipes(${mealIndex})" title="Aggiungi alle mie ricette" class="mt-1 mb-1 w-8 h-8 flex items-center justify-center rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"><i data-lucide="plus" class="w-5 h-5"></i></button>`;
+            if (isRecipeInMyRecipes(meal.title)) {
+              html += `<button disabled title="Già nelle mie ricette" class="mt-1 mb-1 w-8 h-8 flex items-center justify-center rounded-full bg-gray-300 dark:bg-gray-600 text-white cursor-default"><i data-lucide="check" class="w-5 h-5"></i></button>`;
+            } else {
+              html += `<button onclick="addMealPlanRecipeToMyRecipes(${mealIndex})" title="Aggiungi alle mie ricette" class="mt-1 mb-1 w-8 h-8 flex items-center justify-center rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"><i data-lucide="plus" class="w-5 h-5"></i></button>`;
+            }
           }
         }
         mealOpen = false;
@@ -2335,6 +2340,11 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       return html;
     }
 
+    function isRecipeInMyRecipes(title) {
+      const normalized = (title || '').trim().toLowerCase();
+      return Object.values(recipesData).some(r => (r.title || '').trim().toLowerCase() === normalized);
+    }
+
     function addMealPlanRecipeToMyRecipes(index) {
       const meal = mealPlanParsedMeals[index];
       if (!meal || !meal.title || meal.ingredients.length === 0) return;
@@ -2342,18 +2352,7 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       const veganMode = mealPlanData && mealPlanData.veganMode;
       const isVegan = veganMode === 'all' || (veganMode === 'dinner' && meal.mealType === 'CENA');
 
-      db.ref('fridge_recipes').push({ title: meal.title, ingredients: meal.ingredients, procedure: meal.procedure || '', link: '', isVegan: !!isVegan }, (err) => {
-        if (err) return;
-        const btn = document.querySelector(`#mealplan-saved-container button[onclick="addMealPlanRecipeToMyRecipes(${index})"]`);
-        if (btn) {
-          btn.title = 'Aggiunta alle mie ricette';
-          btn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i>';
-          btn.disabled = true;
-          btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
-          btn.classList.add('bg-gray-300', 'dark:bg-gray-600', 'cursor-default');
-          lucide.createIcons();
-        }
-      });
+      db.ref('fridge_recipes').push({ title: meal.title, ingredients: meal.ingredients, procedure: meal.procedure || '', link: '', isVegan: !!isVegan });
     }
 
     function renderMealPlan() {
