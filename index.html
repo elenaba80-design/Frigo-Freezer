@@ -1134,10 +1134,10 @@
               <div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                 <div class="flex items-center gap-2 min-w-0">
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 ${locColorClass}">${locName}</span>
-                  <span class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">${item.name}</span>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">${escapeHtml(item.name)}</span>
                 </div>
                 <div class="flex items-center gap-1 flex-shrink-0">
-                  <span class="text-[11px] text-gray-400 whitespace-nowrap">${hasShelves ? `📍 ${shelfName} • ` : ''}Qtà: ${item.qty || 1}</span>
+                  <span class="text-[11px] text-gray-400 whitespace-nowrap">${hasShelves ? `📍 ${escapeHtml(shelfName)} • ` : ''}Qtà: ${item.qty || 1}</span>
                   <button onclick="openEditModal('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-emerald-600" title="Modifica"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
                   <button onclick="deleteFoodItem('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-red-500" title="Elimina"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                 </div>
@@ -1269,7 +1269,7 @@
       } else {
         listEl.innerHTML = items.map(item => `
           <div class="flex items-center justify-between gap-2 p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-700">
-            <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">${escapeHtmlForPlan(item.name)} ${parseInt(item.qty) > 1 ? `<span class="text-gray-400 font-normal">x${item.qty}</span>` : ''}</span>
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">${escapeHtml(item.name)} ${parseInt(item.qty) > 1 ? `<span class="text-gray-400 font-normal">x${item.qty}</span>` : ''}</span>
             <button onclick="deleteFoodItem('${item.id}', '${loc}')" title="Rimuovi" class="p-1.5 text-gray-400 hover:text-red-500 flex-shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         `).join('');
@@ -1411,7 +1411,7 @@
             <i data-lucide="check" class="w-5 h-5 hidden group-hover:block"></i>
           </div>
           <span class="font-bold text-xs text-gray-700 dark:text-gray-200 line-clamp-2 leading-tight w-full px-1">
-            ${item.name}
+            ${escapeHtml(item.name)}
           </span>
         </div>
       `).join('');
@@ -1536,7 +1536,7 @@
       const catSelect = document.getElementById('bulk-category-select');
       catSelect.innerHTML = '';
       Object.entries(categoriesData).forEach(([id, c]) => {
-        catSelect.innerHTML += `<option value="${id}">${c.name}</option>`;
+        catSelect.innerHTML += `<option value="${id}">${escapeHtml(c.name)}</option>`;
       });
       document.getElementById('modal-bulk-category').classList.remove('hidden');
     }
@@ -1570,7 +1570,7 @@
         select.innerHTML = '';
         const shelves = targetLoc === 'freezer' ? freezerShelvesData : pantryShelvesData;
         getOrderedShelves(shelves).forEach(([id, s]) => {
-          select.innerHTML += `<option value="${id}">${s.name}</option>`;
+          select.innerHTML += `<option value="${id}">${escapeHtml(s.name)}</option>`;
         });
       }
     }
@@ -1663,7 +1663,7 @@
       if (hasShelves && filterBar) {
         filterBar.innerHTML = `<button onclick="filterShelf('${locCode}', 'all')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedShelf === 'all' ? `bg-${colorClass}-600 text-white` : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">Tutti i ripiani</button>`;
         getOrderedShelves(locShelves).forEach(([id, s]) => {
-          filterBar.innerHTML += `<button onclick="filterShelf('${locCode}', '${id}')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedShelf === id ? `bg-${colorClass}-600 text-white` : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">${s.name}</button>`;
+          filterBar.innerHTML += `<button onclick="filterShelf('${locCode}', '${id}')" class="w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedShelf === id ? `bg-${colorClass}-600 text-white` : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">${escapeHtml(s.name)}</button>`;
         });
       }
 
@@ -1730,12 +1730,12 @@
               </div>
               <div class="min-w-0">
                 <h4 class="font-bold text-sm leading-snug flex items-center gap-1.5 min-w-0">
-                  <span class="truncate min-w-0">${item.name}</span>
+                  <span class="truncate min-w-0">${escapeHtml(item.name)}</span>
                   ${expired ? `<span class="bg-red-200 text-red-800 dark:bg-red-900/60 dark:text-red-200 text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">SCADUTO</span>` : ''}
                   ${!expired && item.isOpenPiece ? `<span class="bg-amber-200 text-amber-800 text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">APERTO</span>` : ''}
                 </h4>
                 <div class="text-[11px] text-gray-400 flex items-center gap-2">
-                  ${hasShelves ? `<span>📍 ${shelfName}</span> • ` : ''}<span>Qtà: ${item.qty || 1}</span>
+                  ${hasShelves ? `<span>📍 ${escapeHtml(shelfName)}</span> • ` : ''}<span>Qtà: ${item.qty || 1}</span>
                 </div>
                 ${item.expiryDate ? `<span class="text-[10px] font-semibold ${expired ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}">${expired ? 'Scaduto il' : 'Scade:'} ${item.expiryDate}</span>` : ''}
               </div>
@@ -1792,7 +1792,7 @@
         let shelves = loc === 'freezer' ? freezerShelvesData : pantryShelvesData;
 
         getOrderedShelves(shelves).forEach(([id, s]) => {
-          shelfSelect.innerHTML += `<option value="${id}">${s.name}</option>`;
+          shelfSelect.innerHTML += `<option value="${id}">${escapeHtml(s.name)}</option>`;
         });
         if (currentShelf && shelves[currentShelf]) shelfSelect.value = currentShelf;
       }
@@ -1800,7 +1800,7 @@
       const currentCat = catSelect.value;
       catSelect.innerHTML = '';
       Object.entries(categoriesData).forEach(([id, c]) => {
-        catSelect.innerHTML += `<option value="${id}">${c.name}</option>`;
+        catSelect.innerHTML += `<option value="${id}">${escapeHtml(c.name)}</option>`;
       });
       if (currentCat && categoriesData[currentCat]) catSelect.value = currentCat;
     }
@@ -1857,7 +1857,7 @@
         shelfSelect.innerHTML = '';
         const shelves = loc === 'freezer' ? freezerShelvesData : pantryShelvesData;
         getOrderedShelves(shelves).forEach(([sId, s]) => {
-          shelfSelect.innerHTML += `<option value="${sId}">${s.name}</option>`;
+          shelfSelect.innerHTML += `<option value="${sId}">${escapeHtml(s.name)}</option>`;
         });
         shelfSelect.value = item.shelf || '';
       }
@@ -1865,7 +1865,7 @@
       const catSelect = document.getElementById('edit-category');
       catSelect.innerHTML = '';
       Object.entries(categoriesData).forEach(([cId, c]) => {
-        catSelect.innerHTML += `<option value="${cId}">${c.name}</option>`;
+        catSelect.innerHTML += `<option value="${cId}">${escapeHtml(c.name)}</option>`;
       });
       catSelect.value = item.category;
 
@@ -2036,9 +2036,9 @@
           selectorContainer.innerHTML = availableItems.map(item => {
             const isSelected = selectedAvailableIngredients.has(item);
             return `
-              <button onclick="toggleIngredientSelection('${item.replace(/'/g, "\\'")}')" 
+              <button onclick="toggleIngredientSelection('${item.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
                 class="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${isSelected ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-800 dark:border-gray-700'}">
-                ${isSelected ? '✓ ' : ''}${item}
+                ${isSelected ? '✓ ' : ''}${escapeHtml(item)}
               </button>
             `;
           }).join('');
@@ -2097,11 +2097,11 @@
           <div class="flex items-start justify-between gap-2">
             <div>
               <div class="flex items-center gap-2">
-                <h4 class="font-bold text-sm text-gray-800 dark:text-gray-100">${rec.title}</h4>
+                <h4 class="font-bold text-sm text-gray-800 dark:text-gray-100">${escapeHtml(rec.title)}</h4>
                 ${rec.isVegan ? `<span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 px-1.5 py-0.5 rounded-md">🌱 VEGAN</span>` : ''}
               </div>
-              <p class="text-xs text-gray-500 mt-1"><strong>Ingredienti:</strong> ${ingList.join(', ')}</p>
-              ${rec.procedure ? `<p class="text-xs text-gray-500 mt-1"><strong>Procedimento:</strong> ${rec.procedure}</p>` : ''}
+              <p class="text-xs text-gray-500 mt-1"><strong>Ingredienti:</strong> ${ingList.map(escapeHtml).join(', ')}</p>
+              ${rec.procedure ? `<p class="text-xs text-gray-500 mt-1"><strong>Procedimento:</strong> ${escapeHtml(rec.procedure)}</p>` : ''}
             </div>
             ${isCustom ? `
               <div class="flex items-center gap-1">
@@ -2115,8 +2115,8 @@
             <span class="font-bold ${isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}">
               ${isComplete ? '✨ Hai tutti gli ingredienti!' : `Disponibili: ${matchedCount}/${ingList.length}`}
             </span>
-            ${rec.link ? `
-              <a href="${rec.link}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold">
+            ${rec.link && isSafeUrl(rec.link) ? `
+              <a href="${escapeHtml(rec.link)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold">
                 Vedi Ricetta <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
               </a>
             ` : ''}
@@ -2238,9 +2238,13 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       }
     }
 
-    function escapeHtmlForPlan(str) {
+    function escapeHtml(str) {
       return (str || '').toString()
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function isSafeUrl(url) {
+      return /^https?:\/\//i.test((url || '').trim());
     }
 
     function parseMealPlanText(rawText) {
@@ -2305,7 +2309,7 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       };
 
       lines.forEach(rawLine => {
-        const line = escapeHtmlForPlan(rawLine);
+        const line = escapeHtml(rawLine);
         const trimmed = rawLine.trim();
 
         if (/^GIORNO\s+\d+/i.test(trimmed)) {
@@ -2708,7 +2712,7 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
         return `
           <div class="flex items-center justify-between gap-2 p-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
             <div class="min-w-0">
-              <div class="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">${g.store || 'Scontrino'}</div>
+              <div class="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">${escapeHtml(g.store) || 'Scontrino'}</div>
               <div class="text-[11px] text-gray-400">${date} • ${g.items.length} articoli</div>
             </div>
             <button onclick="importQueuedReceipt('${g.readingId}')" class="flex-shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm transition">Importa</button>
@@ -2898,7 +2902,7 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
         shelfSelect.innerHTML = '';
         const shelves = loc === 'freezer' ? freezerShelvesData : pantryShelvesData;
         getOrderedShelves(shelves).forEach(([id, s]) => {
-          shelfSelect.innerHTML += `<option value="${id}">${s.name}</option>`;
+          shelfSelect.innerHTML += `<option value="${id}">${escapeHtml(s.name)}</option>`;
         });
       }
     }
@@ -3013,8 +3017,8 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
             <label class="flex items-center gap-2.5 min-w-0 cursor-pointer">
               <input type="checkbox" onchange="togglePart2Selection(${idx})" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded accent-emerald-600 flex-shrink-0 cursor-pointer">
               <div class="min-w-0">
-                <div class="text-xs font-bold text-gray-800 dark:text-gray-100">${item.master.name}${item.qty > 1 ? ` <span class="text-emerald-600 dark:text-emerald-400">×${item.qty}</span>` : ''}</div>
-                <div class="text-[10px] text-gray-400">📍 ${shelfName} • (${item.master.locationDefault || 'frigo'})</div>
+                <div class="text-xs font-bold text-gray-800 dark:text-gray-100">${escapeHtml(item.master.name)}${item.qty > 1 ? ` <span class="text-emerald-600 dark:text-emerald-400">×${item.qty}</span>` : ''}</div>
+                <div class="text-[10px] text-gray-400">📍 ${escapeHtml(shelfName)} • (${item.master.locationDefault || 'frigo'})</div>
               </div>
             </label>
             <div class="flex items-center gap-1 flex-shrink-0">
