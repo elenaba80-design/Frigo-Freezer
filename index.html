@@ -1139,7 +1139,8 @@
                 <div class="flex items-center gap-1 flex-shrink-0">
                   <span class="text-[11px] text-gray-400 whitespace-nowrap">${hasShelves ? `📍 ${escapeHtml(shelfName)} • ` : ''}Qtà: ${item.qty || 1}</span>
                   <button onclick="openEditModal('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-emerald-600" title="Modifica"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
-                  <button onclick="deleteFoodItem('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-red-500" title="Elimina"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                  <button onclick="decrementFoodItem('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-orange-500" title="Rimuovi 1"><i data-lucide="minus-circle" class="w-3.5 h-3.5"></i></button>
+                  <button onclick="deleteFoodItem('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-red-500" title="Elimina tutto"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                 </div>
               </div>
             `;
@@ -1298,6 +1299,20 @@
       document.getElementById('confirm-delete-title').textContent = 'Rimuovere alimento?';
       document.getElementById('confirm-delete-name').textContent = pendingDeleteItem.name;
       document.getElementById('modal-confirm-delete').classList.remove('hidden');
+    }
+
+    function decrementFoodItem(id, loc) {
+      const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
+      if (!source) return;
+
+      const currentQty = parseInt(source.qty) || 1;
+      if (currentQty <= 1) {
+        deleteFoodItem(id, loc);
+        return;
+      }
+
+      const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
+      db.ref(`${path}/${id}`).update({ qty: currentQty - 1 });
     }
 
     function openBulkDeleteConfirm() {
