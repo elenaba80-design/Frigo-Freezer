@@ -376,11 +376,21 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2">
+        <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Quantità</label>
             <input type="number" id="add-qty" min="1" value="1" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none">
           </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Unità</label>
+            <select id="add-unit" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none">
+              <option value="pack" selected>Confezioni</option>
+              <option value="piece">Pezzi</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Inserimento</label>
             <input type="date" id="add-entry-date" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-xs outline-none">
@@ -656,9 +666,16 @@
             <input type="number" id="edit-qty" min="1" required class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Data Scadenza (Opzionale)</label>
-            <input type="date" id="edit-expiry-date" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm">
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Unità</label>
+            <select id="edit-unit" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm">
+              <option value="pack">Confezioni</option>
+              <option value="piece">Pezzi</option>
+            </select>
           </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Data Scadenza (Opzionale)</label>
+          <input type="date" id="edit-expiry-date" class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm">
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Note</label>
@@ -1137,7 +1154,7 @@
                   <span class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">${escapeHtml(item.name)}</span>
                 </div>
                 <div class="flex items-center gap-1 flex-shrink-0">
-                  <span class="text-[11px] text-gray-400 whitespace-nowrap">${hasShelves ? `📍 ${escapeHtml(shelfName)} • ` : ''}Qtà: ${item.qty || 1}</span>
+                  <span class="text-[11px] text-gray-400 whitespace-nowrap">${hasShelves ? `📍 ${escapeHtml(shelfName)} • ` : ''}Qtà: ${item.qty || 1} ${unitLabel(item)}</span>
                   <button onclick="openEditModal('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-emerald-600" title="Modifica"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
                   <button onclick="decrementFoodItem('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-orange-500" title="Rimuovi 1"><i data-lucide="minus-circle" class="w-3.5 h-3.5"></i></button>
                   <button onclick="deleteFoodItem('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-red-500" title="Elimina tutto"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
@@ -1270,7 +1287,7 @@
       } else {
         listEl.innerHTML = items.map(item => `
           <div class="flex items-center justify-between gap-2 p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-700">
-            <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">${escapeHtml(item.name)} ${parseInt(item.qty) > 1 ? `<span class="text-gray-400 font-normal">x${item.qty}</span>` : ''}</span>
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">${escapeHtml(item.name)} ${parseInt(item.qty) > 1 ? `<span class="text-gray-400 font-normal">x${item.qty} ${unitLabel(item)}</span>` : ''}</span>
             <button onclick="deleteFoodItem('${item.id}', '${loc}')" title="Rimuovi" class="p-1.5 text-gray-400 hover:text-red-500 flex-shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         `).join('');
@@ -1442,6 +1459,11 @@
 
       if (!source) return;
       db.ref(path).push({ ...source, entryDate: new Date().toISOString().split('T')[0] });
+    }
+
+    const UNIT_LABELS = { pack: 'conf.', piece: 'pz' };
+    function unitLabel(item) {
+      return UNIT_LABELS[item.unit] || UNIT_LABELS.pack;
     }
 
     function getBaseFoodName(name) {
@@ -1750,7 +1772,7 @@
                   ${!expired && item.isOpenPiece ? `<span class="bg-amber-200 text-amber-800 text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">APERTO</span>` : ''}
                 </h4>
                 <div class="text-[11px] text-gray-400 flex items-center gap-2">
-                  ${hasShelves ? `<span>📍 ${escapeHtml(shelfName)}</span> • ` : ''}<span>Qtà: ${item.qty || 1}</span>
+                  ${hasShelves ? `<span>📍 ${escapeHtml(shelfName)}</span> • ` : ''}<span>Qtà: ${item.qty || 1} ${unitLabel(item)}</span>
                 </div>
                 ${item.expiryDate ? `<span class="text-[10px] font-semibold ${expired ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}">${expired ? 'Scaduto il' : 'Scade:'} ${item.expiryDate}</span>` : ''}
               </div>
@@ -1829,6 +1851,7 @@
       const shelf = loc === 'fridge' ? '' : document.getElementById('add-shelf').value;
       const category = document.getElementById('add-category').value;
       const qty = document.getElementById('add-qty').value;
+      const unit = document.getElementById('add-unit').value;
       const entryDate = document.getElementById('add-entry-date').value;
       const expiryDate = document.getElementById('add-expiry-date').value;
       const notes = document.getElementById('add-notes').value;
@@ -1839,7 +1862,7 @@
         photoBase64 = await convertFileToBase64(photoFile);
       }
 
-      const newItem = { name, shelf, category, qty: parseInt(qty), entryDate, expiryDate, notes, photo: photoBase64, isOpenPiece: false };
+      const newItem = { name, shelf, category, qty: parseInt(qty), unit, entryDate, expiryDate, notes, photo: photoBase64, isOpenPiece: false };
       const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
       
       db.ref(path).push(newItem, (err) => {
@@ -1859,6 +1882,7 @@
       document.getElementById('edit-location').value = loc;
       document.getElementById('edit-name').value = item.name;
       document.getElementById('edit-qty').value = item.qty || 1;
+      document.getElementById('edit-unit').value = item.unit || 'pack';
       document.getElementById('edit-expiry-date').value = item.expiryDate || '';
       document.getElementById('edit-notes').value = item.notes || '';
 
@@ -1899,6 +1923,7 @@
         name: document.getElementById('edit-name').value,
         category: document.getElementById('edit-category').value,
         qty: parseInt(document.getElementById('edit-qty').value),
+        unit: document.getElementById('edit-unit').value,
         expiryDate: document.getElementById('edit-expiry-date').value,
         notes: document.getElementById('edit-notes').value
       };
