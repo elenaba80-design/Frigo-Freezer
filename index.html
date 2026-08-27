@@ -708,8 +708,9 @@
       </div>
       <p class="text-sm text-gray-600 dark:text-gray-300">Cosa vuoi fare con <strong id="confirm-delete-name"></strong>?</p>
       <div class="flex flex-col gap-2">
+        <button id="confirm-delete-one" onclick="confirmDeleteItem('one')" class="hidden w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition shadow-sm">Rimuovi solo 1 pezzo</button>
         <button onclick="confirmDeleteItem(true)" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition shadow-sm">Elimina e Aggiungi alla Spesa</button>
-        <button onclick="confirmDeleteItem(false)" class="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-sm transition shadow-sm">Elimina</button>
+        <button onclick="confirmDeleteItem(false)" class="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-sm transition shadow-sm">Elimina tutto</button>
         <button onclick="cancelDeleteItem()" class="w-full py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl text-sm transition">Annulla</button>
       </div>
     </div>
@@ -1162,16 +1163,18 @@
             matchCount++;
             const shelfName = hasShelves ? (shelvesObj[item.shelf]?.name || 'Generale') : 'Unico';
             resultsHTML += `
-              <div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <div class="flex flex-col gap-1 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                 <div class="flex items-center gap-2 min-w-0">
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 ${locColorClass}">${locName}</span>
                   <span class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">${escapeHtml(item.name)}</span>
                 </div>
-                <div class="flex items-center gap-1 flex-shrink-0">
-                  <span class="text-[11px] text-gray-400 whitespace-nowrap">${hasShelves ? `📍 ${escapeHtml(shelfName)} • ` : ''}Qtà: ${item.qty || 1} ${unitLabel(item)}</span>
-                  <button onclick="openEditModal('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-emerald-600" title="Modifica"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
-                  <button onclick="decrementFoodItem('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-orange-500" title="Rimuovi 1"><i data-lucide="minus-circle" class="w-3.5 h-3.5"></i></button>
-                  <button onclick="deleteFoodItem('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-red-500" title="Elimina tutto"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-[11px] text-gray-400 whitespace-nowrap truncate">${hasShelves ? `📍 ${escapeHtml(shelfName)} • ` : ''}Qtà: ${item.qty || 1} ${unitLabel(item)}</span>
+                  <div class="flex items-center gap-1 flex-shrink-0">
+                    <button onclick="openEditModal('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-emerald-600" title="Modifica"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                    <button onclick="decrementFoodItem('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-orange-500" title="Rimuovi 1"><i data-lucide="minus-circle" class="w-3.5 h-3.5"></i></button>
+                    <button onclick="deleteFoodItem('${id}', '${locCode}')" class="p-1.5 text-gray-400 hover:text-red-500" title="Elimina tutto"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                  </div>
                 </div>
               </div>
             `;
@@ -1326,9 +1329,13 @@
       const source = loc === 'fridge' ? fridgeData[id] : (loc === 'freezer' ? freezerData[id] : pantryData[id]);
       if (!source) return;
 
-      pendingDeleteItem = { id, loc, name: getBaseFoodName(source.name) };
+      const qty = parseInt(source.qty) || 1;
+      pendingDeleteItem = { id, loc, name: getBaseFoodName(source.name), qty };
       document.getElementById('confirm-delete-title').textContent = 'Rimuovere alimento?';
       document.getElementById('confirm-delete-name').textContent = pendingDeleteItem.name;
+      const oneBtn = document.getElementById('confirm-delete-one');
+      oneBtn.classList.toggle('hidden', qty <= 1);
+      oneBtn.textContent = `Rimuovi solo 1 pezzo (restano ${qty - 1})`;
       document.getElementById('modal-confirm-delete').classList.remove('hidden');
     }
 
@@ -1351,6 +1358,7 @@
       pendingBulkDeleteItems = Array.from(selectedItemsForBulk.values());
       document.getElementById('confirm-delete-title').textContent = 'Rimuovere gli alimenti selezionati?';
       document.getElementById('confirm-delete-name').textContent = `${pendingBulkDeleteItems.length} alimenti selezionati`;
+      document.getElementById('confirm-delete-one').classList.add('hidden');
       document.getElementById('modal-confirm-delete').classList.remove('hidden');
     }
 
@@ -1382,13 +1390,21 @@
       }
 
       if (!pendingDeleteItem) return;
-      const { id, loc, name } = pendingDeleteItem;
+      const { id, loc, name, qty } = pendingDeleteItem;
+      const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
+
+      if (addToShoppingList === 'one') {
+        db.ref(`${path}/${id}`).update({ qty: Math.max(1, (qty || 1) - 1) }, () => {
+          pendingDeleteItem = null;
+          closeModal('modal-confirm-delete');
+        });
+        return;
+      }
 
       if (addToShoppingList) {
         db.ref("shopping_items").push({ name, addedAt: new Date().toISOString() });
       }
 
-      const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
       db.ref(`${path}/${id}`).remove(() => {
         pendingDeleteItem = null;
         closeModal('modal-confirm-delete');
@@ -1924,7 +1940,8 @@
 
       document.getElementById('modal-edit-food').classList.remove('hidden');
       lucide.createIcons();
-      setTimeout(() => document.getElementById('edit-qty').select(), 50);
+      document.getElementById('edit-qty').focus();
+      document.getElementById('edit-qty').select();
     }
 
     function handleSaveEditFood(e) {
