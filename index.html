@@ -2873,7 +2873,7 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       if (existing) {
         existing.qty = (existing.qty || 1) + incrementBy;
       } else {
-        arr.push({ cleaned, qty: incrementBy, ...extra });
+        arr.push({ cleaned, qty: incrementBy, unit: 'pack', ...extra });
       }
     }
 
@@ -2999,7 +2999,8 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       db.ref(`master_db/${currentMergeCandidate.id}`).update({ aliases: updatedAliases }, () => {
         mergeReceiptItem(mappedReceiptItems, item.cleaned, {
           raw: item.raw,
-          master: { ...currentMergeCandidate, aliases: updatedAliases }
+          master: { ...currentMergeCandidate, aliases: updatedAliases },
+          unit: item.unit || 'pack'
         }, item.qty || 1);
         currentUnmappedIndex++;
         renderPart1CurrentItem();
@@ -3025,7 +3026,8 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       const newRef = db.ref("master_db").push(newMaster);
       mergeReceiptItem(mappedReceiptItems, item.cleaned, {
         raw: item.raw,
-        master: { id: newRef.key, ...newMaster }
+        master: { id: newRef.key, ...newMaster },
+        unit: item.unit || 'pack'
       }, item.qty || 1);
 
       currentUnmappedIndex++;
@@ -3053,23 +3055,45 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
         const shelfName = isFridge ? 'Frigo' : (item.master.locationDefault === 'freezer' ? freezerShelvesData[item.master.shelfDefault]?.name : pantryShelvesData[item.master.shelfDefault]?.name) || 'Generale';
         const isChecked = selectedPart2Names.has(item.cleaned);
         return `
-          <div class="flex items-center justify-between p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
-            <label class="flex items-center gap-2.5 min-w-0 cursor-pointer">
-              <input type="checkbox" onchange="togglePart2Selection(${idx})" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded accent-emerald-600 flex-shrink-0 cursor-pointer">
-              <div class="min-w-0">
-                <div class="text-xs font-bold text-gray-800 dark:text-gray-100">${escapeHtml(item.master.name)}${item.qty > 1 ? ` <span class="text-emerald-600 dark:text-emerald-400">×${item.qty}</span>` : ''}</div>
-                <div class="text-[10px] text-gray-400">📍 ${escapeHtml(shelfName)} • (${item.master.locationDefault || 'frigo'})</div>
+          <div class="flex flex-col gap-2 p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
+            <div class="flex items-center justify-between gap-2">
+              <label class="flex items-center gap-2.5 min-w-0 cursor-pointer">
+                <input type="checkbox" onchange="togglePart2Selection(${idx})" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded accent-emerald-600 flex-shrink-0 cursor-pointer">
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-gray-800 dark:text-gray-100 truncate">${escapeHtml(item.master.name)}</div>
+                  <div class="text-[10px] text-gray-400">📍 ${escapeHtml(shelfName)} • (${item.master.locationDefault || 'frigo'})</div>
+                </div>
+              </label>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <button onclick="editPart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                <button onclick="deletePart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
               </div>
-            </label>
-            <div class="flex items-center gap-1 flex-shrink-0">
-              <button onclick="editPart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-              <button onclick="deletePart2Item(${idx})" class="p-1.5 text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+            <div class="flex items-center gap-2 pl-6">
+              <input type="number" min="1" value="${item.qty || 1}" onchange="updatePart2Qty(${idx}, this.value)" class="w-16 p-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-800 outline-none">
+              <select onchange="updatePart2Unit(${idx}, this.value)" class="p-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-800 outline-none">
+                <option value="pack" ${(item.unit || 'pack') === 'pack' ? 'selected' : ''}>Confezioni</option>
+                <option value="piece" ${item.unit === 'piece' ? 'selected' : ''}>Pezzi</option>
+              </select>
             </div>
           </div>
         `;
       }).join('');
 
       lucide.createIcons();
+    }
+
+    function updatePart2Qty(idx, value) {
+      const item = mappedReceiptItems[idx];
+      if (!item) return;
+      const n = parseInt(value);
+      item.qty = n > 0 ? n : 1;
+    }
+
+    function updatePart2Unit(idx, value) {
+      const item = mappedReceiptItems[idx];
+      if (!item) return;
+      item.unit = value;
     }
 
     function togglePart2Selection(idx) {
@@ -3092,7 +3116,7 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
 
     function editPart2Item(idx) {
       const removed = mappedReceiptItems.splice(idx, 1)[0];
-      unmappedReceiptItems.splice(currentUnmappedIndex, 0, { raw: removed.raw, cleaned: removed.cleaned, qty: removed.qty || 1 });
+      unmappedReceiptItems.splice(currentUnmappedIndex, 0, { raw: removed.raw, cleaned: removed.cleaned, qty: removed.qty || 1, unit: removed.unit || 'pack' });
       renderPart1CurrentItem();
       renderPart2List();
     }
@@ -3115,12 +3139,14 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
         const path = targetLoc === 'fridge' ? 'fridge_items' : (targetLoc === 'freezer' ? 'freezer_items' : 'pantry_items');
         const targetShelf = targetLoc === 'fridge' ? '' : (item.master.shelfDefault || '');
         const locData = targetLoc === 'fridge' ? fridgeData : (targetLoc === 'freezer' ? freezerData : pantryData);
+        const itemUnit = item.unit || 'pack';
 
         const existingId = Object.keys(locData).find(id => {
           const existing = locData[id];
           return !existing.isOpenPiece
             && (existing.shelf || '') === targetShelf
-            && getBaseFoodName(existing.name).toLowerCase() === item.master.name.toLowerCase();
+            && getBaseFoodName(existing.name).toLowerCase() === item.master.name.toLowerCase()
+            && (existing.unit || 'pack') === itemUnit;
         });
 
         if (existingId) {
@@ -3132,6 +3158,7 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
             shelf: targetShelf,
             category: 'c1',
             qty: item.qty || 1,
+            unit: itemUnit,
             entryDate: today,
             expiryDate: '',
             isOpenPiece: false
