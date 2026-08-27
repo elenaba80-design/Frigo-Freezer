@@ -878,6 +878,20 @@
 
             <div class="grid grid-cols-2 gap-2">
               <div>
+                <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Quantità</label>
+                <input type="number" id="part1-qty-input" min="1" class="w-full p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs outline-none">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Unità</label>
+                <select id="part1-unit-select" class="w-full p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs outline-none">
+                  <option value="pack">Confezioni</option>
+                  <option value="piece">Pezzi</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
                 <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Destinazione</label>
                 <select id="part1-location-select" onchange="updatePart1ShelfVisibility()" class="w-full p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs outline-none">
                   <option value="fridge">🥗 Frigo</option>
@@ -2961,6 +2975,8 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       document.getElementById('part1-total-count').innerText = unmappedReceiptItems.length;
       document.getElementById('part1-raw-text').innerText = item.raw + (item.qty > 1 ? ` ×${item.qty}` : '');
       document.getElementById('part1-name-input').value = item.cleaned;
+      document.getElementById('part1-qty-input').value = item.qty || 1;
+      document.getElementById('part1-unit-select').value = item.unit || 'pack';
 
       updatePart1ShelfVisibility();
 
@@ -2990,6 +3006,8 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
     function confirmMergeNewItem() {
       if (!currentMergeCandidate) return;
       const item = unmappedReceiptItems[currentUnmappedIndex];
+      const qty = parseInt(document.getElementById('part1-qty-input').value) || 1;
+      const unit = document.getElementById('part1-unit-select').value;
 
       const updatedAliases = currentMergeCandidate.aliases || [];
       if (!updatedAliases.includes(item.cleaned)) {
@@ -3000,8 +3018,8 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
         mergeReceiptItem(mappedReceiptItems, item.cleaned, {
           raw: item.raw,
           master: { ...currentMergeCandidate, aliases: updatedAliases },
-          unit: item.unit || 'pack'
-        }, item.qty || 1);
+          unit: unit
+        }, qty);
         currentUnmappedIndex++;
         renderPart1CurrentItem();
         renderPart2List();
@@ -3011,6 +3029,8 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
     function saveAndNextNewItem() {
       const item = unmappedReceiptItems[currentUnmappedIndex];
       const name = document.getElementById('part1-name-input').value.trim();
+      const qty = parseInt(document.getElementById('part1-qty-input').value) || 1;
+      const unit = document.getElementById('part1-unit-select').value;
       const location = document.getElementById('part1-location-select').value;
       const shelf = location === 'fridge' ? '' : document.getElementById('part1-shelf-select').value;
 
@@ -3027,8 +3047,8 @@ Rispondi solo in italiano, senza introduzioni o commenti fuori da questo schema.
       mergeReceiptItem(mappedReceiptItems, item.cleaned, {
         raw: item.raw,
         master: { id: newRef.key, ...newMaster },
-        unit: item.unit || 'pack'
-      }, item.qty || 1);
+        unit: unit
+      }, qty);
 
       currentUnmappedIndex++;
       renderPart1CurrentItem();
