@@ -90,6 +90,13 @@ def main():
               + str(SEND_HOUR) + ", nessuna azione.")
         return
 
+    # Interruttore "forza_notifica" del Run workflow: manda subito la notifica
+    # saltando il controllo, utile per verificare che l'app ntfy sia a posto.
+    if os.environ.get("FORZA_NOTIFICA", "").lower() == "true":
+        send_reminder()
+        print("Notifica di prova inviata (forza_notifica).")
+        return
+
     # Giorno da controllare: dopo mezzogiorno = oggi, prima = ieri (cosi' funziona
     # sia di sera sia se un'esecuzione manuale capita dopo mezzanotte).
     day = now if now.hour >= 12 else now - datetime.timedelta(days=1)

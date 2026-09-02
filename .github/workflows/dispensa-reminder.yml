@@ -10,7 +10,12 @@ on:
     # prosegue solo se in Italia sono effettivamente le 22.
     - cron: "0 20 * * *"
     - cron: "0 21 * * *"
-  workflow_dispatch: {}  # permette l'avvio manuale dalla scheda "Actions"
+  workflow_dispatch:  # avvio manuale dalla scheda "Actions"
+    inputs:
+      forza_notifica:
+        description: "Manda subito la notifica di prova (ignora il controllo attivita')"
+        type: boolean
+        default: false
 
 jobs:
   reminder:
@@ -21,3 +26,5 @@ jobs:
         with:
           python-version: "3.11"
       - run: python scripts/dispensa_reminder.py
+        env:
+          FORZA_NOTIFICA: ${{ inputs.forza_notifica }}
