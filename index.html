@@ -2097,6 +2097,11 @@
       if (!isIngredientStateInitialized && availableItems.length > 0) {
         selectedAvailableIngredients = new Set(availableItems);
         isIngredientStateInitialized = true;
+      } else {
+        const availableSet = new Set(availableItems);
+        for (const sel of Array.from(selectedAvailableIngredients)) {
+          if (!availableSet.has(sel)) selectedAvailableIngredients.delete(sel);
+        }
       }
 
       const selectorContainer = document.getElementById('recipe-ingredients-selector');
