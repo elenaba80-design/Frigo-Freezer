@@ -1,0 +1,20 @@
+name: Promemoria Dispensa
+
+# Controlla ogni sera se la Dispensa e' stata aggiornata durante la giornata e,
+# se non lo e' stata, manda una notifica push via ntfy.
+on:
+  schedule:
+    # 22:04 UTC = 00:04 in Italia con l'ora legale, 23:04 con l'ora solare.
+    # GitHub puo' far partire i job schedulati con qualche minuto di ritardo.
+    - cron: "4 22 * * *"
+  workflow_dispatch: {}  # permette l'avvio manuale dalla scheda "Actions"
+
+jobs:
+  reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python scripts/dispensa_reminder.py
