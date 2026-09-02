@@ -54,7 +54,7 @@
       </div>
     </header>
 
-    <div id="global-nav-grid" class="hidden flex flex-wrap justify-center gap-1.5 mb-4 max-w-4xl mx-auto w-full">
+    <div id="global-nav-grid" class="hidden flex flex-wrap justify-center gap-1.5 mb-4 w-fit max-w-full mx-auto bg-gray-800 dark:bg-slate-100 border border-gray-700 dark:border-slate-200 rounded-2xl shadow-sm p-2">
       <button data-tab="home" onclick="switchTab('home')" class="flex flex-col items-center justify-center gap-0 w-14 h-14 flex-shrink-0 bg-white dark:bg-gray-800 p-0.5 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
         <div class="p-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-md">
           <i data-lucide="home" class="w-6 h-6"></i>
@@ -111,6 +111,35 @@
         </div>
         <span class="text-[7px] font-bold text-gray-700 dark:text-gray-200 leading-none">Ricette</span>
       </button>
+    </div>
+
+    <div id="page-title-fridge" class="hidden w-full mb-4 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl shadow-sm px-4 py-2.5 flex items-center justify-center gap-2">
+      <i data-lucide="salad" class="w-4 h-4 text-white"></i>
+      <span class="font-bold text-sm text-white tracking-wide">Frigo</span>
+    </div>
+    <div id="page-title-freezer" class="hidden w-full mb-4 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-2xl shadow-sm px-4 py-2.5 flex items-center justify-center gap-2">
+      <i data-lucide="snowflake" class="w-4 h-4 text-white"></i>
+      <span class="font-bold text-sm text-white tracking-wide">Freezer</span>
+    </div>
+    <div id="page-title-pantry" class="hidden w-full mb-4 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-2xl shadow-sm px-4 py-2.5 flex items-center justify-center gap-2">
+      <i data-lucide="package" class="w-4 h-4 text-white"></i>
+      <span class="font-bold text-sm text-white tracking-wide">Dispensa</span>
+    </div>
+    <div id="page-title-receipts" class="hidden w-full mb-4 bg-gradient-to-r from-pink-500 to-rose-600 rounded-2xl shadow-sm px-4 py-2.5 flex items-center justify-center gap-2">
+      <i data-lucide="receipt" class="w-4 h-4 text-white"></i>
+      <span class="font-bold text-sm text-white tracking-wide">Scontrini</span>
+    </div>
+    <div id="page-title-shopping" class="hidden w-full mb-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-sm px-4 py-2.5 flex items-center justify-center gap-2">
+      <i data-lucide="shopping-cart" class="w-4 h-4 text-white"></i>
+      <span class="font-bold text-sm text-white tracking-wide">Lista della Spesa</span>
+    </div>
+    <div id="page-title-add" class="hidden w-full mb-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl shadow-sm px-4 py-2.5 flex items-center justify-center gap-2">
+      <i data-lucide="plus-circle" class="w-4 h-4 text-white"></i>
+      <span class="font-bold text-sm text-white tracking-wide">Nuovo Alimento</span>
+    </div>
+    <div id="page-title-recipes" class="hidden w-full mb-4 bg-gradient-to-r from-orange-500 to-amber-600 rounded-2xl shadow-sm px-4 py-2.5 flex items-center justify-center gap-2">
+      <i data-lucide="utensils" class="w-4 h-4 text-white"></i>
+      <span class="font-bold text-sm text-white tracking-wide">Ricette</span>
     </div>
 
     <section id="tab-home" class="space-y-4 max-w-4xl mx-auto w-full">
@@ -197,10 +226,7 @@
     </section>
 
     <section id="tab-receipts" class="hidden max-w-3xl mx-auto w-full space-y-4">
-      <div class="bg-gradient-to-r from-pink-500 to-rose-600 text-white p-5 rounded-3xl shadow-sm">
-        <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="receipt" class="w-6 h-6"></i> Scontrini</h2>
-        <p class="text-xs text-pink-100 mt-1">Carica un nuovo scontrino oppure importa quelli già analizzati in coda.</p>
-      </div>
+      <p class="text-xs text-gray-500 dark:text-gray-400 text-center">Carica un nuovo scontrino oppure importa quelli già analizzati in coda.</p>
 
       <div class="grid grid-cols-2 gap-3">
         <button onclick="openReceiptModal()" class="flex flex-col items-center justify-center gap-2 p-5 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-95 transition-all">
@@ -223,21 +249,18 @@
     </section>
 
     <section id="tab-shopping" class="hidden max-w-3xl mx-auto w-full space-y-4">
-      <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-5 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-          <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="shopping-cart" class="w-6 h-6"></i> Lista della Spesa</h2>
-          <p class="text-xs text-blue-100 mt-1">Condividi la lista con chi vuoi o carica direttamente uno scontrino d'acquisto.</p>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="openReceiptModal()" class="bg-emerald-500 text-white hover:bg-emerald-600 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2 whitespace-nowrap">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-xs text-gray-500 dark:text-gray-400">Condividi la lista con chi vuoi o carica direttamente uno scontrino d'acquisto.</p>
+        <div class="flex gap-2 flex-shrink-0">
+          <button onclick="openReceiptModal()" class="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2 whitespace-nowrap">
             <i data-lucide="receipt" class="w-4 h-4"></i> Carica Scontrino
           </button>
-          <button onclick="shareShoppingList()" class="bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2 whitespace-nowrap">
+          <button onclick="shareShoppingList()" class="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-2 whitespace-nowrap">
             <i data-lucide="share-2" class="w-4 h-4"></i> Condividi Lista
           </button>
         </div>
       </div>
-      
+
       <form onsubmit="handleManualAddShopping(event)" class="flex gap-2">
         <input type="text" id="manual-shopping-input" placeholder="Aggiungi qualcosa a mano (es. Latte, Tofu, Lievito)..." required class="flex-1 p-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
         <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl font-bold text-sm shadow-sm transition">Aggiungi</button>
@@ -338,9 +361,6 @@
     </section>
 
     <section id="tab-add" class="hidden space-y-4 bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm max-w-2xl mx-auto w-full">
-      <h2 class="text-lg font-bold flex items-center gap-2 text-gray-800 dark:text-gray-100">
-        <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-500"></i> Nuovo Alimento
-      </h2>
       <form id="add-food-form" onsubmit="handleAddFood(event)" class="space-y-4">
         <div>
           <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Destinazione *</label>
@@ -1112,17 +1132,18 @@
       document.getElementById('global-nav-grid').classList.toggle('hidden', tabId === 'home');
       ['home', 'fridge', 'freezer', 'pantry', 'shopping', 'add', 'recipes', 'receipts'].forEach(t => {
         const section = document.getElementById(`tab-${t}`);
-        if (!section) return;
-        section.classList.toggle('hidden', t !== tabId);
+        if (section) section.classList.toggle('hidden', t !== tabId);
+        const title = document.getElementById(`page-title-${t}`);
+        if (title) title.classList.toggle('hidden', t !== tabId);
       });
       document.querySelectorAll('#global-nav-grid button[data-tab]').forEach(btn => {
         const isActive = btn.dataset.tab === tabId;
         btn.classList.toggle('ring-2', isActive);
-        btn.classList.toggle('ring-gray-800', isActive);
-        btn.classList.toggle('dark:ring-white', isActive);
+        btn.classList.toggle('ring-white', isActive);
+        btn.classList.toggle('dark:ring-gray-800', isActive);
         btn.classList.toggle('ring-offset-2', isActive);
-        btn.classList.toggle('ring-offset-gray-50', isActive);
-        btn.classList.toggle('dark:ring-offset-gray-900', isActive);
+        btn.classList.toggle('ring-offset-gray-800', isActive);
+        btn.classList.toggle('dark:ring-offset-slate-100', isActive);
       });
       if (tabId === 'recipes') resetRecipesSectionsView();
       lucide.createIcons();
