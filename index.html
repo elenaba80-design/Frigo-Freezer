@@ -431,6 +431,11 @@
           <textarea id="add-notes" rows="2" placeholder="Es. Aperto il giorno 12..." class="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-700 text-sm outline-none"></textarea>
         </div>
 
+        <div class="flex items-center gap-2 p-2.5 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+          <input type="checkbox" id="add-is-open" class="w-4 h-4 rounded text-amber-600 accent-amber-600 cursor-pointer">
+          <label for="add-is-open" class="text-xs font-semibold text-amber-800 dark:text-amber-300 cursor-pointer">📦 Contrassegna subito come Aperto</label>
+        </div>
+
         <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition">
           Salva nel Database
         </button>
@@ -657,7 +662,7 @@
     </div>
   </div>
 
-  <div id="modal-edit-food" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+  <div id="modal-edit-food" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[55] flex items-center justify-center p-4">
     <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-5 space-y-4 border border-gray-100 dark:border-gray-700">
       <div class="flex justify-between items-center">
         <h3 class="font-bold text-lg">Modifica Cibo</h3>
@@ -1326,7 +1331,11 @@
         listEl.innerHTML = items.map(item => `
           <div class="flex items-center justify-between gap-2 p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-700">
             <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">${escapeHtml(item.name)} ${parseInt(item.qty) > 1 ? `<span class="text-gray-400 font-normal">x${item.qty} ${unitLabel(item)}</span>` : ''}</span>
-            <button onclick="deleteFoodItem('${item.id}', '${loc}')" title="Rimuovi" class="p-1.5 text-gray-400 hover:text-red-500 flex-shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <button onclick="openEditModal('${item.id}', '${loc}')" title="Modifica" class="p-1.5 text-gray-400 hover:text-amber-600"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+              <button onclick="moveFoodItem('${item.id}', '${loc}')" title="Sposta reparto" class="p-1.5 text-gray-400 hover:text-cyan-600"><i data-lucide="arrow-left-right" class="w-4 h-4"></i></button>
+              <button onclick="deleteFoodItem('${item.id}', '${loc}')" title="Rimuovi" class="p-1.5 text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
           </div>
         `).join('');
       }
@@ -1907,13 +1916,15 @@
       const expiryDate = document.getElementById('add-expiry-date').value;
       const notes = document.getElementById('add-notes').value;
       const photoFile = document.getElementById('add-photo').files[0];
+      const isOpenPiece = document.getElementById('add-is-open').checked;
 
       let photoBase64 = '';
       if (photoFile) {
         photoBase64 = await convertFileToBase64(photoFile);
       }
 
-      const newItem = { name, shelf, category, qty: parseInt(qty), unit, entryDate, expiryDate, notes, photo: photoBase64, isOpenPiece: false };
+      const finalName = isOpenPiece ? `${name} (Aperto)` : name;
+      const newItem = { name: finalName, shelf, category, qty: parseInt(qty), unit, entryDate, expiryDate, notes, photo: photoBase64, isOpenPiece };
       const path = loc === 'fridge' ? 'fridge_items' : (loc === 'freezer' ? 'freezer_items' : 'pantry_items');
       
       db.ref(path).push(newItem, (err) => {
