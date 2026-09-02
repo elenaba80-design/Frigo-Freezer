@@ -4,9 +4,12 @@ name: Promemoria Dispensa
 # se non lo e' stata, manda una notifica push via ntfy.
 on:
   schedule:
-    # 20:00 UTC = 22:00 in Italia con l'ora legale, 21:00 con l'ora solare.
-    # GitHub puo' far partire i job schedulati con qualche minuto di ritardo.
+    # GitHub usa solo UTC e non conosce l'ora legale. Facciamo partire il job a
+    # entrambi gli orari che possono corrispondere alle 22:00 italiane
+    # (20:00 UTC con l'ora legale, 21:00 UTC con l'ora solare); lo script poi
+    # prosegue solo se in Italia sono effettivamente le 22.
     - cron: "0 20 * * *"
+    - cron: "0 21 * * *"
   workflow_dispatch: {}  # permette l'avvio manuale dalla scheda "Actions"
 
 jobs:

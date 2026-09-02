@@ -14,9 +14,13 @@ mezzanotte (ora italiana).
 """
 import datetime
 import json
+import os
 import sys
 import urllib.request
 from zoneinfo import ZoneInfo
+
+# Ora locale (Italia) a cui deve partire il promemoria.
+SEND_HOUR = 22
 
 # Canale ntfy a cui e' iscritto il telefono (vedi app "ntfy").
 NTFY_TOPIC = "dispensa-elena-4b90bc88"
@@ -77,9 +81,17 @@ def send_reminder():
 
 def main():
     now = datetime.datetime.now(ZoneInfo("Europe/Rome"))
-    # Il workflow parte verso le 00:04 (ora legale) o le 23:04 (ora solare).
-    # In entrambi i casi il giorno da controllare e' quello che sta per finire
-    # / e' appena finito: dopo mezzogiorno = oggi, prima di mezzogiorno = ieri.
+
+    # Il workflow schedulato parte a due orari UTC (uno per l'ora legale, uno per
+    # l'ora solare): proseguiamo solo in quello che in Italia corrisponde alle
+    # SEND_HOUR. Le esecuzioni manuali (workflow_dispatch) passano sempre.
+    if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and now.hour != SEND_HOUR:
+        print("In Italia sono le " + now.strftime("%H:%M") + " - non sono le "
+              + str(SEND_HOUR) + ", nessuna azione.")
+        return
+
+    # Giorno da controllare: dopo mezzogiorno = oggi, prima = ieri (cosi' funziona
+    # sia di sera sia se un'esecuzione manuale capita dopo mezzanotte).
     day = now if now.hour >= 12 else now - datetime.timedelta(days=1)
     target = day.strftime("%Y-%m-%d")
 
